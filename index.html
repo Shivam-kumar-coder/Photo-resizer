@@ -1,74 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><title>Photo Resizer Online | Reduce Image Size to KB, MB & Pixels Free</title>
+<head>
+    <meta charset="UTF-8">
 
-<meta name="description" content="Free online photo resizer to reduce image size to 20KB, 50KB, 100KB, 200KB, 500KB & 1MB. Resize, compress, crop & convert images instantly. Fastest tool for exams & job forms.">
+    <title>Photo Resizer & Image Tools – Free Online</title>
 
-<meta name="keywords" content="photo resizer, reduce image size, resize image online, compress photo kb, image size reducer, photo resizer 20kb, 50kb photo compressor, 100kb image converter">
+    <meta name="description" content="Free Photo Resizer Tool. Resize images by width/height, compress image size in KB, convert JPG to PNG and PNG to JPG instantly. Fast, secure and mobile friendly.">
 
-<meta name="robots" content="index, follow">
+    <meta name="keywords" content="photo resizer, image resizer, resize photo online, compress image, reduce image size, jpg to png, png to jpg, online image tool, photo resize kb">
 
-<meta property="og:title" content="Photo Resizer Online - Free Image Resize & Compression Tool">
-<meta property="og:description" content="Resize photos to KB, MB, pixels instantly. Fast, simple and free. Best tool for government forms and exams.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://photoresizer.in/">
-<meta property="og:image" content="/thumbnail.png">
+    <meta name="author" content="Photo Resizer">
 
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Photo Resizer Online - Fast & Free">
-<meta name="twitter:description" content="Resize & compress images instantly to KB/MB. 100% free tool.">
-<meta name="twitter:image" content="/thumbnail.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org/",
-  "@type": "SoftwareApplication",
-  "name": "Photo Resizer Online",
-  "applicationCategory": "ImageEditor",
-  "operatingSystem": "Web",
-  "url": "https://photoresizer.in",
-  "description": "Free tool to resize, compress & reduce image size to KB/MB for job forms & exams.",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" }
-}
-</script>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Photo Resizer</title>
-  <link rel="stylesheet" href="style.css" />
+    <!-- SEO SCHEMA -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Photo Resizer Online",
+      "applicationCategory": "Utility",
+      "operatingSystem": "All",
+      "description": "Resize, compress, JPG to PNG, PNG to JPG online.",
+      "url": "https://photo-resizer.vercel.app"
+    }
+    </script>
+
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-  <div class="container">
-    <h1>Photo Resizer</h1>
+<h1>⚡ Free Photo Tools</h1>
 
-    <div class="upload-box">
-      <label for="imageInput">Select Image</label>
-      <input type="file" id="imageInput" accept="image/*">
-    </div>
+<!-- Resize -->
+<div class="box">
+    <h2>Resize Image</h2>
+    <input type="file" id="resizeInput">
+    <input type="number" id="resizeW" placeholder="Width">
+    <input type="number" id="resizeH" placeholder="Height">
+    <button onclick="resizeImg()">Resize</button>
+    <a id="resizeDownload" style="display:none;">Download</a>
+</div>
 
-    <div class="controls">
-      <label>Width</label>
-      <input type="number" id="width" placeholder="Width">
+<!-- Compress -->
+<div class="box">
+    <h2>Compress Image (Reduce KB)</h2>
+    <input type="file" id="compressInput">
+    <label>Quality:</label>
+    <input type="range" id="quality" min="1" max="100" value="60">
+    <span id="qVal">60</span>%
+    <button onclick="compressImg()">Compress</button>
+    <a id="compressDownload" style="display:none;">Download</a>
+</div>
 
-      <label>Height</label>
-      <input type="number" id="height" placeholder="Height">
+<!-- Convert to PNG -->
+<div class="box">
+    <h2>Convert to PNG</h2>
+    <input type="file" id="pngInput">
+    <button onclick="convertToPNG()">Convert to PNG</button>
+    <a id="pngDownload" style="display:none;">Download</a>
+</div>
 
-      <button id="resizeBtn">Resize Image</button>
-    </div>
+<!-- Convert to JPG -->
+<div class="box">
+    <h2>Convert to JPG</h2>
+    <input type="file" id="jpgInput">
+    <button onclick="convertToJPG()">Convert to JPG</button>
+    <a id="jpgDownload" style="display:none;">Download</a>
+</div>
 
-    <canvas id="canvas"></canvas>
+<script src="resize.js"></script>
+<script src="compress.js"></script>
+<script src="convert.js"></script>
 
-    <a id="downloadBtn" download="resized-image.jpg">Download Image</a>
-  </div>
-
-  <script src="script.js"></script>
-<h2>Photo Resizer Online — Fast & Free</h2>
-<p>Resize your photos instantly for forms, exams, and social media. Choose pixel size (width x height), percentage, or target file size (KB/MB) and download the optimized image in seconds.</p>
-
-<h3>How to use</h3>
-<p>Select an image → Choose width/height or KB limit → Click Resize/Compress → Preview and Download. No registration, fully free, works on mobile and desktop.</p>
-
-<h3>Why use our tool?</h3>
-<p>Our tool keeps image quality high while making the file small — ideal for uploading to government forms and job portals. Works with JPG, PNG and WebP formats.</p>
 </body>
 </html>

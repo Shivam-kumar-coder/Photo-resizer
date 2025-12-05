@@ -4,13 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>QuickPic Tools — Resize • Compress • Convert • Image→PDF</title>
-  <meta name="description" content="QuickPic Tools - Resize image by KB or pixels, compress, convert JPG/PNG and export to PDF. Fast & secure - runs in your browser." />
+  <meta name="description" content="QuickPic Tools - Resize image by KB or pixels, compress, convert JPG/PNG and export to PDF. Fast & secure, runs fully in your browser." />
+  <meta property="og:title" content="QuickPic Tools — Resize & Compress Images" />
+  <meta property="og:description" content="Resize photos to required KB, compress, convert and export to PDF. No upload — runs in browser." />
+  <!-- AdSense placeholder (paste your AdSense code here when approved) -->
+  <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> -->
+
   <link rel="stylesheet" href="style.css">
   <!-- jsPDF for Image->PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-
   <header class="topbar">
     <div class="wrap">
       <div class="brand">QuickPic Tools</div>
@@ -25,11 +29,9 @@
   </header>
 
   <main class="container">
-
-    <!-- top helper / preview -->
     <section class="hero">
       <h1>Reduce Image Size — Fast & Free</h1>
-      <p class="lead">Select or drag & drop an image. Choose a tool tab above. Everything runs locally in your browser — no upload.</p>
+      <p class="lead">Select or drag & drop an image below. Choose a tool tab. Everything runs locally in your browser — files are not uploaded.</p>
     </section>
 
     <section class="main-grid">
@@ -38,15 +40,23 @@
         <!-- SELECT / PREVIEW BOX -->
         <div class="card select-card">
           <div id="dropZone" class="dropzone">
-            <div class="dz-text">Select or drag & drop an image here</div>
-            <button id="chooseBtn" class="btn small green">Choose Image</button>
-            <input id="fileInput" type="file" accept="image/*" hidden>
+            <div class="dz-left">
+              <div class="dz-title">Select or drag & drop image</div>
+              <div class="dz-sub muted">Supports JPG, PNG, WebP</div>
+            </div>
+            <div class="dz-right">
+              <div id="fileLabel" class="file-label">No file chosen</div>
+              <button id="chooseBtn" class="btn small green">Choose Image</button>
+              <input id="fileInput" type="file" accept="image/*" hidden>
+            </div>
           </div>
 
           <div id="preview" class="preview hide">
             <img id="previewImg" alt="preview">
             <div class="meta" id="metaInfo"></div>
           </div>
+
+          <div id="status" class="status muted"></div>
         </div>
 
         <!-- TAB: Resize by KB -->
@@ -56,7 +66,7 @@
             <input id="targetKB" type="number" placeholder="Target KB (e.g. 100)" min="1">
             <button id="btnKB" class="btn">Reduce Size</button>
           </div>
-          <small class="hint">Algorithm will reduce quality and downscale progressively to reach target KB (best for photos/JPEG).</small>
+          <small class="hint">Tool reduces quality and downscales progressively to reach target KB (best for photos).</small>
         </div>
 
         <!-- TAB: Resize W×H -->
@@ -102,8 +112,8 @@
           <h3>Quick Tips</h3>
           <ul class="tips">
             <li>For forms use 100–200 KB.</li>
-            <li>JPEG compresses better; PNG best for graphics.</li>
-            <li>Use Resize (W×H) for exact pixel sizes.</li>
+            <li>JPEG compresses photos best; PNG is for graphics.</li>
+            <li>Resize (W×H) for exact pixel sizes (e.g., passport).</li>
           </ul>
         </div>
 
@@ -111,13 +121,14 @@
           <h3>Other Tools</h3>
           <a class="side-link">Images → PDF</a>
           <a class="side-link">Passport Photo</a>
+          <a class="side-link">Signature Maker</a>
         </div>
       </aside>
     </section>
   </main>
 
   <footer class="footer">
-    © QuickPic Tools — Works in browser. Privacy: images are not uploaded.
+    © QuickPic Tools — Works entirely in your browser. Privacy: images are not uploaded.
   </footer>
 
   <script src="script.js"></script>

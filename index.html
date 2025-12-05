@@ -1,52 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reduce Image Size in KB</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reduce Image Size — QuickPic Tools</title>
+  <meta name="description" content="QuickPic Tools - Resize (KB/px), compress and convert images online. Fast & free." />
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+  <header class="topbar">
+    <div class="container">
+      <div class="brand">QuickPic</div>
+      <nav class="nav">
+        <a href="#resize-kb">Resize (KB)</a>
+        <a href="#resize-px">Resize (W×H)</a>
+        <a href="#compress">Compress</a>
+        <a href="#convert">Convert</a>
+      </nav>
+    </div>
+  </header>
 
-    <header>
-        <div class="logo">📷 Image TOOL</div>
-        <nav>
-            <a href="#">Merge PDF</a>
-            <a href="#">Resize Image</a>
-            <a href="#">Compress Image</a>
-            <a href="#">Convert Image</a>
-        </nav>
-    </header>
+  <main>
+    <section class="hero">
+      <div class="container">
+        <h1>Reduce Image Size In KB</h1>
+        <p class="lead">Compress an image to 20KB, 50KB, 100KB, 200KB or any custom size. Works in your browser — no upload.</p>
+      </div>
+    </section>
 
-    <main>
-        <h1 class="title">Reduce Image Size In KB</h1>
-        <p class="subtitle">Compress an image to 20kb, 50kb, 100kb or any size you want.</p>
-
+    <div class="layout container">
+      <main class="left">
+        <!-- DROP AREA -->
         <div class="card">
+          <div class="drop" id="dropArea">
+            <p class="muted">Select or drag & drop image here</p>
+            <button id="chooseBtn" class="btn green">Select Image</button>
+            <input id="fileInput" type="file" accept="image/*" hidden>
+          </div>
 
-            <div class="upload-box">
-                <p>Select Or Drag & Drop Images Here</p>
-                <button class="select-btn">Select Images</button>
-            </div>
-
-            <div class="size-row">
-                <input type="number" id="size" placeholder="100"> 
-                <span>KB</span>
-                <button class="reduce-btn">Reduce Size</button>
-            </div>
-
+          <div id="previewBox" class="preview" style="display:none">
+            <img id="previewImg" alt="preview">
+            <div id="previewMeta" class="meta"></div>
+          </div>
         </div>
-    </main>
 
-    <aside class="sidebar">
-        <h3>Image Tools</h3>
-        <a href="#">PDF to Images</a>
-        <a href="#">Images to PDF</a>
-        <a href="#">Signature Maker</a>
-        <a href="#">Watermark Image</a>
-        <a href="#">Blur Background</a>
-    </aside>
+        <!-- RESIZE BY KB -->
+        <div id="resize-kb" class="card">
+          <h2>Resize by target size (KB)</h2>
+          <div class="row">
+            <input id="targetKB" type="number" placeholder="Enter target KB (e.g. 100)">
+            <button id="doKB" class="btn">Reduce Size</button>
+          </div>
+          <small class="hint">Tool will try quality reduction + downscale to reach KB. Works best for JPEG input.</small>
+        </div>
 
+        <!-- RESIZE BY PIXEL -->
+        <div id="resize-px" class="card">
+          <h2>Resize by width × height (pixels)</h2>
+          <div class="row">
+            <input id="widthPx" type="number" placeholder="Width (px)">
+            <input id="heightPx" type="number" placeholder="Height (px)">
+          </div>
+          <div class="row">
+            <button id="doPx" class="btn">Resize & Download</button>
+          </div>
+        </div>
+
+        <!-- COMPRESS -->
+        <div id="compress" class="card">
+          <h2>Compress (Quality)</h2>
+          <div class="row">
+            <label class="range-label">Quality:</label>
+            <input id="qualityRange" type="range" min="5" max="95" value="60">
+            <span id="qualityVal">60</span>%
+          </div>
+          <div class="row">
+            <button id="doCompress" class="btn">Compress & Download</button>
+          </div>
+          <small class="hint">Lower quality → smaller file. Use for faster results.</small>
+        </div>
+
+        <!-- CONVERT -->
+        <div id="convert" class="card">
+          <h2>Convert (JPG & PNG)</h2>
+          <div class="row">
+            <button id="toPng" class="btn outline">Convert → PNG</button>
+            <button id="toJpg" class="btn outline">Convert → JPG</button>
+          </div>
+        </div>
+      </main>
+
+      <aside class="right">
+        <div class="panel">
+          <h3>Other tools</h3>
+          <ul class="links">
+            <li>Passport Photo</li>
+            <li>Images → PDF</li>
+            <li>Signature Maker</li>
+            <li>Watermark</li>
+          </ul>
+        </div>
+
+        <div class="panel small">
+          <h4>Quick Tips</h4>
+          <p>For forms use 100–200 KB. For photos keep quality 60–80.</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="footer">
+    © QuickPic Tools — Free • Works offline in browser
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>

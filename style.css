@@ -1,53 +1,26 @@
+
 body {
-  font-family: Arial, sans-serif;
-  background: #f3f3f3;
-  padding: 20px;
+    font-family: Arial;
+    max-width: 700px;
+    margin: auto;
+    padding: 20px;
 }
 
-.container {
-  max-width: 400px;
-  margin: auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+.box {
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 10px;
 }
 
-h1 {
-  text-align: center;
+input, button {
+    padding: 10px;
+    margin: 8px 0;
 }
 
-.upload-box label {
-  display: block;
-  background: #4A90E2;
-  color: white;
-  padding: 12px;
-  text-align: center;
-  border-radius: 8px;
-  margin-bottom: 10px;
-}
-
-.controls input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-}
-
-#resizeBtn {
-  width: 100%;
-  padding: 12px;
-  background: #07A96F;
-  color: white;
-  border-radius: 8px;
-  border: none;
-}
-
-#downloadBtn {
-  display: none;
-  margin-top: 15px;
-  background: #ff6600;
-  padding: 12px;
-  text-align: center;
-  color: white;
-  border-radius: 8px;
+button {
+    background: #0A84FF;
+    color: white;
+    border: none;
+    border-radius: 5px;
 }

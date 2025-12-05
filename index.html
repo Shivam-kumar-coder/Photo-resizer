@@ -1,78 +1,215 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Photo Tools – Resize, Compress, Convert</title>
 
-    <title>Photo Resizer & Image Tools – Free Online</title>
+  <meta name="description" content="Resize, compress (KB reduce), convert JPG to PNG & PNG to JPG instantly. Fast online image tools – mobile friendly, free forever.">
+  <meta name="keywords" content="photo resize, reduce kb, compress image, convert png, convert jpg, passport photo, image tool online">
 
-    <meta name="description" content="Free Photo Resizer Tool. Resize images by width/height, compress image size in KB, convert JPG to PNG and PNG to JPG instantly. Fast, secure and mobile friendly.">
-
-    <meta name="keywords" content="photo resizer, image resizer, resize photo online, compress image, reduce image size, jpg to png, png to jpg, online image tool, photo resize kb">
-
-    <meta name="author" content="Photo Resizer">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- SEO SCHEMA -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "Photo Resizer Online",
-      "applicationCategory": "Utility",
-      "operatingSystem": "All",
-      "description": "Resize, compress, JPG to PNG, PNG to JPG online.",
-      "url": "https://photo-resizer.vercel.app"
+  <style>
+    body {
+      font-family: Arial;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 20px;
     }
-    </script>
 
-    <link rel="stylesheet" href="style.css">
+    .container {
+      max-width: 850px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 26px;
+    }
+
+    .tool-box {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ddd;
+      margin-bottom: 25px;
+    }
+
+    .tool-title {
+      font-size: 20px;
+      margin-bottom: 12px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    input, button, select {
+      padding: 10px;
+      width: 100%;
+      margin: 7px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .row input {
+      flex: 1;
+    }
+  </style>
 </head>
 
 <body>
+  <div class="container">
+    <h1>⚡ Free Photo Tools</h1>
 
-<h1>⚡ Free Photo Tools</h1>
+    <!-- Resize -->
+    <div class="tool-box">
+      <div class="tool-title">Resize Image</div>
+      <input type="file" id="resizeInput">
 
-<!-- Resize -->
-<div class="box">
-    <h2>Resize Image</h2>
-    <input type="file" id="resizeInput">
-    <input type="number" id="resizeW" placeholder="Width">
-    <input type="number" id="resizeH" placeholder="Height">
-    <button onclick="resizeImg()">Resize</button>
-    <a id="resizeDownload" style="display:none;">Download</a>
-</div>
+      <div class="row">
+        <input type="number" id="resizeW" placeholder="Width">
+        <input type="number" id="resizeH" placeholder="Height">
+      </div>
 
-<!-- Compress -->
-<div class="box">
-    <h2>Compress Image (Reduce KB)</h2>
-    <input type="file" id="compressInput">
-    <label>Quality:</label>
-    <input type="range" id="quality" min="1" max="100" value="60">
-    <span id="qVal">60</span>%
-    <button onclick="compressImg()">Compress</button>
-    <a id="compressDownload" style="display:none;">Download</a>
-</div>
+      <button onclick="resizeImage()">Resize</button>
+    </div>
 
-<!-- Convert to PNG -->
-<div class="box">
-    <h2>Convert to PNG</h2>
-    <input type="file" id="pngInput">
-    <button onclick="convertToPNG()">Convert to PNG</button>
-    <a id="pngDownload" style="display:none;">Download</a>
-</div>
 
-<!-- Convert to JPG -->
-<div class="box">
-    <h2>Convert to JPG</h2>
-    <input type="file" id="jpgInput">
-    <button onclick="convertToJPG()">Convert to JPG</button>
-    <a id="jpgDownload" style="display:none;">Download</a>
-</div>
+    <!-- Compress -->
+    <div class="tool-box">
+      <div class="tool-title">Compress Image (Reduce KB)</div>
+      <input type="file" id="compressInput">
 
-<script src="resize.js"></script>
-<script src="compress.js"></script>
-<script src="convert.js"></script>
+      <label>Quality (1–100%)</label>
+      <input type="range" id="qualitySlider" min="1" max="100" value="40">
+
+      <button onclick="compressImage()">Compress</button>
+    </div>
+
+
+    <!-- Convert PNG -->
+    <div class="tool-box">
+      <div class="tool-title">Convert to PNG</div>
+      <input type="file" id="pngInput">
+      <button onclick="convertPNG()">Convert to PNG</button>
+    </div>
+
+
+    <!-- Convert JPG -->
+    <div class="tool-box">
+      <div class="tool-title">Convert to JPG</div>
+      <input type="file" id="jpgInput">
+      <button onclick="convertJPG()">Convert to JPG</button>
+    </div>
+
+  </div>
+
+<script>
+function resizeImage() {
+  let file = document.getElementById("resizeInput").files[0];
+  let w = document.getElementById("resizeW").value;
+  let h = document.getElementById("resizeH").value;
+
+  if (!file || !w || !h) return alert("Please choose file and size");
+
+  let img = new Image();
+  img.src = URL.createObjectURL(file);
+  img.onload = function () {
+    let canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    let ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, w, h);
+
+    let link = document.createElement("a");
+    link.download = "resized.jpg";
+    link.href = canvas.toDataURL("image/jpeg");
+    link.click();
+  };
+}
+
+function compressImage() {
+  let file = document.getElementById("compressInput").files[0];
+  let quality = document.getElementById("qualitySlider").value / 100;
+
+  if (!file) return alert("Choose an image");
+
+  let img = new Image();
+  img.src = URL.createObjectURL(file);
+
+  img.onload = function () {
+    let canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    let ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+
+    let link = document.createElement("a");
+    link.download = "compressed.jpg";
+    link.href = canvas.toDataURL("image/jpeg", quality);
+    link.click();
+  };
+}
+
+function convertPNG() {
+  let file = document.getElementById("pngInput").files[0];
+  if (!file) return alert("Choose image");
+
+  let img = new Image();
+  img.src = URL.createObjectURL(file);
+
+  img.onload = function () {
+    let canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    let ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+
+    let link = document.createElement("a");
+    link.download = "converted.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  };
+}
+
+function convertJPG() {
+  let file = document.getElementById("jpgInput").files[0];
+  if (!file) return alert("Choose image");
+
+  let img = new Image();
+  img.src = URL.createObjectURL(file);
+
+  img.onload = function () {
+    let canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    let ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+
+    let link = document.createElement("a");
+    link.download = "converted.jpg";
+    link.href = canvas.toDataURL("image/jpeg");
+    link.click();
+  };
+}
+</script>
 
 </body>
 </html>

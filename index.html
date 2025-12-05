@@ -1,73 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Tools</title>
-    <link rel="stylesheet" href="style.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QuickPic Tools — Resize • Compress • Convert • Image→PDF</title>
+  <meta name="description" content="QuickPic Tools - Resize image by KB or pixels, compress, convert JPG/PNG and export to PDF. Fast & secure - runs in your browser." />
+  <link rel="stylesheet" href="style.css">
+  <!-- jsPDF for Image->PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-
 <body>
 
-    <!-- HEADER -->
-    <header class="top-header">
-        <nav class="menu">
-            <span class="menu-item active" data-target="resize-kb">Resize (KB)</span>
-            <span class="menu-item" data-target="resize-wh">Resize (W×H)</span>
-            <span class="menu-item" data-target="compress">Compress</span>
-            <span class="menu-item" data-target="convert">Convert JPG ↔ PNG</span>
-            <span class="menu-item" data-target="img-pdf">Image → PDF</span>
-        </nav>
-    </header>
-
-    <!-- CONTAINER -->
-    <div class="container">
-
-        <!-- Resize by KB -->
-        <section id="resize-kb" class="tool-section visible">
-            <h2>Resize Image by KB</h2>
-            <input type="file" id="resizeKbInput">
-            <input type="number" id="resizeKbValue" placeholder="Enter KB (ex: 100)">
-            <button onclick="resizeByKB()">Resize</button>
-        </section>
-
-        <!-- Resize by Width × Height -->
-        <section id="resize-wh" class="tool-section">
-            <h2>Resize by Width × Height (px)</h2>
-            <input type="file" id="resizeWHInput">
-            <input type="number" id="resizeWidth" placeholder="Width px">
-            <input type="number" id="resizeHeight" placeholder="Height px">
-            <button onclick="resizeByWH()">Resize</button>
-        </section>
-
-        <!-- Compress -->
-        <section id="compress" class="tool-section">
-            <h2>Compress Image</h2>
-            <input type="file" id="compressInput">
-            <label>Quality: <span id="qVal">60</span>%</label>
-            <input type="range" min="1" max="100" value="60" id="qSlider" oninput="document.getElementById('qVal').innerText=this.value;">
-            <button onclick="compressImage()">Compress</button>
-        </section>
-
-        <!-- Convert -->
-        <section id="convert" class="tool-section">
-            <h2>Convert Images</h2>
-            <input type="file" id="convertInput">
-            <button onclick="convertToPNG()">Convert → PNG</button>
-            <button onclick="convertToJPG()">Convert → JPG</button>
-        </section>
-
-        <!-- IMAGE TO PDF -->
-        <section id="img-pdf" class="tool-section">
-            <h2>Convert Image → PDF</h2>
-            <input type="file" id="pdfInput">
-            <button onclick="imageToPDF()">Convert to PDF</button>
-        </section>
-
+  <header class="topbar">
+    <div class="wrap">
+      <div class="brand">QuickPic Tools</div>
+      <nav class="tabs" id="tabs">
+        <button class="tab active" data-target="tab-kb">Resize (KB)</button>
+        <button class="tab" data-target="tab-px">Resize (W×H)</button>
+        <button class="tab" data-target="tab-compress">Compress</button>
+        <button class="tab" data-target="tab-convert">Convert</button>
+        <button class="tab" data-target="tab-pdf">Image → PDF</button>
+      </nav>
     </div>
+  </header>
 
-    <script src="script.js"></script>
+  <main class="container">
 
+    <!-- top helper / preview -->
+    <section class="hero">
+      <h1>Reduce Image Size — Fast & Free</h1>
+      <p class="lead">Select or drag & drop an image. Choose a tool tab above. Everything runs locally in your browser — no upload.</p>
+    </section>
+
+    <section class="main-grid">
+      <div class="left-col">
+
+        <!-- SELECT / PREVIEW BOX -->
+        <div class="card select-card">
+          <div id="dropZone" class="dropzone">
+            <div class="dz-text">Select or drag & drop an image here</div>
+            <button id="chooseBtn" class="btn small green">Choose Image</button>
+            <input id="fileInput" type="file" accept="image/*" hidden>
+          </div>
+
+          <div id="preview" class="preview hide">
+            <img id="previewImg" alt="preview">
+            <div class="meta" id="metaInfo"></div>
+          </div>
+        </div>
+
+        <!-- TAB: Resize by KB -->
+        <div id="tab-kb" class="card tool-tab visible">
+          <h2>Resize to target size (KB)</h2>
+          <div class="row">
+            <input id="targetKB" type="number" placeholder="Target KB (e.g. 100)" min="1">
+            <button id="btnKB" class="btn">Reduce Size</button>
+          </div>
+          <small class="hint">Algorithm will reduce quality and downscale progressively to reach target KB (best for photos/JPEG).</small>
+        </div>
+
+        <!-- TAB: Resize W×H -->
+        <div id="tab-px" class="card tool-tab">
+          <h2>Resize by width × height (pixels)</h2>
+          <div class="row">
+            <input id="widthPx" type="number" placeholder="Width (px)">
+            <input id="heightPx" type="number" placeholder="Height (px)">
+          </div>
+          <button id="btnPx" class="btn">Resize & Download</button>
+        </div>
+
+        <!-- TAB: Compress -->
+        <div id="tab-compress" class="card tool-tab">
+          <h2>Compress (quality slider)</h2>
+          <div class="row align">
+            <label class="muted">Quality: <span id="qualVal">60</span>%</label>
+            <input id="quality" type="range" min="5" max="95" value="60">
+          </div>
+          <button id="btnCompress" class="btn">Compress & Download</button>
+        </div>
+
+        <!-- TAB: Convert -->
+        <div id="tab-convert" class="card tool-tab">
+          <h2>Convert Image</h2>
+          <div class="row">
+            <button id="toPng" class="btn outline">Convert → PNG</button>
+            <button id="toJpg" class="btn outline">Convert → JPG</button>
+          </div>
+        </div>
+
+        <!-- TAB: Image -> PDF -->
+        <div id="tab-pdf" class="card tool-tab">
+          <h2>Image → PDF</h2>
+          <p class="muted">Convert the current image to a single-page PDF.</p>
+          <button id="btnPdf" class="btn">Export as PDF</button>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN (tips / links) -->
+      <aside class="right-col">
+        <div class="card">
+          <h3>Quick Tips</h3>
+          <ul class="tips">
+            <li>For forms use 100–200 KB.</li>
+            <li>JPEG compresses better; PNG best for graphics.</li>
+            <li>Use Resize (W×H) for exact pixel sizes.</li>
+          </ul>
+        </div>
+
+        <div class="card small">
+          <h3>Other Tools</h3>
+          <a class="side-link">Images → PDF</a>
+          <a class="side-link">Passport Photo</a>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="footer">
+    © QuickPic Tools — Works in browser. Privacy: images are not uploaded.
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>

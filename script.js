@@ -1,265 +1,290 @@
-// ------------------------------------------
-// GLOBAL VARIABLES
-// ------------------------------------------
-let images = []; // Stores uploaded images as { file, url }
+// QuickPic - Final Fixed: Convert only JPG/PNG with correct extension & alert instead of pop-up
+const fileInput = document.getElementById('fileInput');
+const selectBtn = document.getElementById('selectBtn');
+const dropbox = document.getElementById('dropbox');
+const browseText = document.getElementById('browseText');
+const thumbsArea = document.getElementById('thumbs-area');
+const thumbGrid = document.getElementById('thumb-grid');
+const resetBtn = document.getElementById('resetBtn');
 
-// Success green box message
-function showSuccess() {
-    const box = document.getElementById("successMsg");
-    box.classList.remove("hidden");
-    setTimeout(() => box.classList.add("hidden"), 2500);
-}
+const navButtons = document.querySelectorAll('.nav-btn');
+const toolPanels = document.querySelectorAll('.tool-panel');
 
-// ------------------------------------------
-// FILE UPLOAD SYSTEM
-// ------------------------------------------
-const fileInput = document.getElementById("fileInput");
-const thumbGrid = document.getElementById("thumb-grid");
+const targetSizeEl = document.getElementById('targetSize');
+const sizeUnitEl = document.getElementById('sizeUnit');
+const widthPxEl = document.getElementById('widthPx');
+const heightPxEl = document.getElementById('heightPx');
+const keepAspectEl = document.getElementById('keepAspect');
+const qualitySlider = document.getElementById('qualitySlider');
+const qualityVal = document.getElementById('qualityVal');
+const convertFormat = document.getElementById('convertFormat');
 
-document.getElementById("selectBtn").onclick = () => fileInput.click();
-document.getElementById("browseText").onclick = () => fileInput.click();
+let files = [];
 
-fileInput.onchange = (e) => loadImages(e.target.files);
+// Drag & Drop Highlight
+['dragenter', 'dragover'].forEach(e => dropbox.addEventListener(e, () => dropbox.classList.add('dragover')));
+['dragleave', 'drop'].forEach(e => dropbox.addEventListener(e, () => dropbox.classList.remove('dragover')));
+dropbox.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); handleFiles(e.dataTransfer.files); });
 
-function loadImages(files) {
-    images = [];
-    thumbGrid.innerHTML = "";
+// File selection
+selectBtn.onclick = browseText.onclick = () => fileInput.click();
+fileInput.onchange = e => handleFiles(e.target.files);
+resetBtn.onclick = resetAll;
 
-    [...files].forEach((file) => {
-        const url = URL.createObjectURL(file);
-        images.push({ file, url });
-
-        const img = document.createElement("img");
-        img.src = url;
-        img.className = "thumb";
-        thumbGrid.appendChild(img);
-    });
-
-    document.getElementById("thumbs-area").classList.remove("hidden");
-}
-
-// ------------------------------------------
-// TOOL TABS SYSTEM (Only one panel visible)
-// ------------------------------------------
-document.querySelectorAll(".nav-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-
-        document.querySelectorAll(".tool-panel").forEach(panel =>
-            panel.classList.remove("visible")
-        );
-
-        document.getElementById(btn.dataset.tool).classList.add("visible");
-    });
+// Tool Switching - EK HI TOOL DIKHEGA
+navButtons.forEach(btn => {
+  btn.onclick = () => {
+    navButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const toolId = btn.dataset.tool;
+    toolPanels.forEach(p => p.classList.toggle('visible', p.id === toolId));
+  };
 });
 
-// ------------------------------------------
-// DOWNLOAD UTILITY
-// ------------------------------------------
+// Handle Files
+function handleFiles(fileList) {
+  const valid = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+  if (!valid.length) return alert('Please select valid images (JPG/PNG/WebP)');
+  files = []; thumbGrid.innerHTML = '';
+  let loaded = 0;
+
+  valid.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        files.push({ file, dataURL: e.target.result, width: img.naturalWidth, height: img.naturalHeight });
+        addThumb(file.name, e.target.result, img.naturalWidth, img.naturalHeight, file.size);
+        if (++loaded === valid.length) afterFilesLoaded();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function addThumb(name, src, w, h, sizeKB) {
+  const div = document.createElement('div');
+  div.className = 'thumb-item';
+  div.innerHTML = `<img src="\( {src}" alt=" \){name}">
+    <div class="thumb-meta">\( {name}<br> \){(sizeKB/1024).toFixed(1)} KB<br>\( {w}× \){h}</div>`;
+  thumbGrid.appendChild(div);
+}
+
+function afterFilesLoaded() {
+  document.getElementById('select-area').style.display = 'none';
+  thumbsArea.classList.remove('hidden');
+}
+
+// Reset
+function resetAll() {
+  files = []; thumbGrid.innerHTML = ''; fileInput.value = '';
+  thumbsArea.classList.add('hidden');
+  document.getElementById('select-area').style.display = 'block';
+}
+
+// Utility: dataURL to Blob
+function dataURLtoBlob(dataURL) {
+  const arr = dataURL.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8 = new Uint8Array(n);
+  while (n--) u8[n] = bstr.charCodeAt(n);
+  return new Blob([u8], { type: mime });
+}
+
+// Utility: Download Blob
 function downloadBlob(blob, name) {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = name;
-    a.click();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
-// ------------------------------------------
-// CONVERT FORMAT (JPG / PNG / WEBP)
-// ------------------------------------------
-document.getElementById("runConvert").onclick = async () => {
-    const format = document.getElementById("convertFormat").value;
+// Utility: Strip Extension
+function stripExt(name) {
+  return name.replace(/\.[^/.]+$/, '');
+}
 
-    for (const item of images) {
-        await convertSingle(item.file, format);
+// KB/MB Resize Tool - Fixed with ±10 KB Range (e.g., 490-510 for 500)
+async function compressToTargetSize(file, targetKB) {
+  const targetBytes = targetKB * 1024;
+  const minBytes = (targetKB - 10) * 1024; // Min range
+  const maxBytes = (targetKB + 10) * 1024; // Max range
+  const read = f => new Promise(res => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.readAsDataURL(f);
+  });
+  const dataURL = await read(file);
+  const img = new Image();
+  img.src = dataURL;
+  await new Promise(r => img.onload = r);
+
+  let canvas = document.createElement('canvas');
+  let ctx = canvas.getContext('2d');
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+
+  let quality = 0.95;
+  let scale = 1.0;
+  let resultBlob = null;
+
+  for (let iter = 0; iter < 30; iter++) { // More iterations for precision
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const w = Math.max(1, Math.round(img.naturalWidth * scale));
+    const h = Math.max(1, Math.round(img.naturalHeight * scale));
+    canvas.width = w; canvas.height = h;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    const data = canvas.toDataURL('image/jpeg', quality);
+    const blob = dataURLtoBlob(data);
+    const size = blob.size;
+    if (size >= minBytes && size <= maxBytes) {
+      resultBlob = blob;
+      break;
     }
-
-    showSuccess();
-};
-
-function convertSingle(file, format) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement("canvas");
-            canvas.width = img.width;
-            canvas.height = img.height;
-
-            canvas.getContext("2d").drawImage(img, 0, 0);
-
-            canvas.toBlob((blob) => {
-                downloadBlob(blob, file.name.replace(/\.\w+$/, "") + outputExt(format));
-                resolve();
-            }, format, 0.9);
-        };
-        img.src = URL.createObjectURL(file);
-    });
-}
-
-function outputExt(type) {
-    if (type === "image/jpeg") return ".jpg";
-    if (type === "image/png") return ".png";
-    return ".webp";
-}
-
-// ------------------------------------------
-// COMPRESS IMAGE (QUALITY SLIDER)
-// ------------------------------------------
-document.getElementById("qualitySlider").oninput = function () {
-    document.getElementById("qualityVal").textContent = this.value;
-};
-
-document.getElementById("runCompress").onclick = async () => {
-    const q = document.getElementById("qualitySlider").value / 100;
-
-    for (const item of images) {
-        await compressImage(item.file, q);
+    // Finer adjustments
+    if (size > maxBytes) {
+      if (quality > 0.20) quality -= 0.04; // Smaller step down
+      else scale -= 0.03;
+    } else if (size < minBytes) {
+      if (quality < 0.95) quality += 0.03; // Step up if under
+      else scale += 0.02;
     }
+  }
 
-    showSuccess();
-};
-
-function compressImage(file, quality) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement("canvas");
-            canvas.width = img.width;
-            canvas.height = img.height;
-
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0);
-
-            canvas.toBlob((blob) => {
-                downloadBlob(blob, file.name.replace(/\.\w+$/, "") + ".jpg");
-                resolve();
-            }, "image/jpeg", quality);
-        };
-        img.src = URL.createObjectURL(file);
-    });
+  if (!resultBlob) {
+    // Fallback to closest
+    const data = canvas.toDataURL('image/jpeg', quality);
+    resultBlob = dataURLtoBlob(data);
+  }
+  return resultBlob;
 }
 
-// ------------------------------------------
-// RESIZE TO WIDTH × HEIGHT (PX)
-// ------------------------------------------
-document.getElementById("runPx").onclick = async () => {
-    const w = +document.getElementById("widthPx").value;
-    const h = +document.getElementById("heightPx").value;
-    const keep = document.getElementById("keepAspect").checked;
-
-    for (const item of images) {
-        await resizePx(item.file, w, h, keep);
+document.getElementById('runKb').addEventListener('click', async () => {
+  if (!files.length) return alert('Upload image(s) first.');
+  const val = Number(targetSizeEl.value);
+  if (!val || val <= 0) return alert('Enter valid size.');
+  const unit = sizeUnitEl.value;
+  const targetKB = unit === 'mb' ? val * 1024 : val;
+  for (const item of files) {
+    try {
+      const out = await compressToTargetSize(item.file, targetKB);
+      downloadBlob(out, `\( {stripExt(item.file.name)}-to- \){Math.round(targetKB)}KB.jpg`);
+    } catch (err) {
+      console.error(err);
+      alert('Error processing ' + item.file.name);
     }
+  }
+  alert('Successfully downloaded');
+});
 
-    showSuccess();
-};
+// PX Resize Tool
+document.getElementById('runPx').addEventListener('click', () => {
+  if (!files.length) return alert('Upload image(s) first.');
+  const w = Number(widthPxEl.value);
+  const h = Number(heightPxEl.value);
+  const keep = keepAspectEl.checked;
+  if (!w && !h) return alert('Enter width or height.');
+  let processed = 0;
+  files.forEach(item => {
+    const img = new Image();
+    img.onload = () => {
+      let tw = w || img.naturalWidth;
+      let th = h || img.naturalHeight;
+      if (keep) {
+        if (w && !h) th = Math.round(img.naturalHeight * (w / img.naturalWidth));
+        else if (h && !w) tw = Math.round(img.naturalWidth * (h / img.naturalHeight));
+      }
+      const c = document.createElement('canvas');
+      c.width = tw; c.height = th;
+      c.getContext('2d').drawImage(img, 0, 0, tw, th);
+      c.toBlob(blob => {
+        downloadBlob(blob, `\( {stripExt(item.file.name)}-resized- \){tw}x${th}.jpg`);
+        processed++;
+        if (processed === files.length) alert('Successfully downloaded');
+      }, 'image/jpeg', 0.92);
+    };
+    img.src = item.dataURL;
+  });
+});
 
-function resizePx(file, w, h, keepAspect) {
-    return new Promise((resolve) => {
-        const img = new Image();
+// Compress Tool
+qualitySlider.addEventListener('input', () => qualityVal.textContent = qualitySlider.value);
+document.getElementById('runCompress').addEventListener('click', () => {
+  if (!files.length) return alert('Upload image(s) first.');
+  const q = Number(qualitySlider.value) / 100;
+  let processed = 0;
+  files.forEach(item => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img, 0, 0);
+      c.toBlob(blob => {
+        downloadBlob(blob, `${stripExt(item.file.name)}-compressed.jpg`);
+        processed++;
+        if (processed === files.length) alert('Successfully downloaded');
+      }, 'image/jpeg', q);
+    };
+    img.src = item.dataURL;
+  });
+});
 
-        img.onload = () => {
-            let newW = w;
-            let newH = h;
+// Convert Tool - Fixed: Only JPG/PNG, correct extension & MIME, alert at end
+document.getElementById('runConvert').addEventListener('click', () => {
+  if (!files.length) return alert('Upload image(s) first.');
+  const fmt = convertFormat.value;
+  const extMap = {
+    'image/jpeg': '.jpg',
+    'image/png': '.png'
+  };
+  const ext = extMap[fmt] || '.jpg';
+  const quality = fmt === 'image/jpeg' ? 0.92 : undefined; // No quality for PNG
+  let processed = 0;
+  files.forEach(item => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img, 0, 0);
+      c.toBlob(blob => {
+        downloadBlob(blob, `\( {stripExt(item.file.name)} \){ext}`);
+        processed++;
+        if (processed === files.length) alert('Successfully downloaded');
+      }, fmt, quality);
+    };
+    img.src = item.dataURL;
+  });
+});
 
-            if (keepAspect) {
-                const ratio = img.width / img.height;
-                if (w) newH = Math.round(w / ratio);
-                if (h) newW = Math.round(h * ratio);
-            }
-
-            const canvas = document.createElement("canvas");
-            canvas.width = newW;
-            canvas.height = newH;
-
-            canvas.getContext("2d").drawImage(img, 0, 0, newW, newH);
-
-            canvas.toBlob((blob) => {
-                downloadBlob(blob, file.name.replace(/\.\w+$/, "") + ".jpg");
-                resolve();
-            }, "image/jpeg", 0.9);
-        };
-
-        img.src = URL.createObjectURL(file);
-    });
-}
-
-// ------------------------------------------
-// RESIZE TO TARGET KB/MB
-// ------------------------------------------
-document.getElementById("runKb").onclick = async () => {
-    const size = +document.getElementById("targetSize").value;
-    const unit = document.getElementById("sizeUnit").value;
-
-    const targetBytes = unit === "kb" ? size * 1024 : size * 1024 * 1024;
-
-    for (const item of images) {
-        await resizeToSize(item.file, targetBytes);
-    }
-
-    showSuccess();
-};
-
-function resizeToSize(file, targetBytes) {
-    return new Promise((resolve) => {
-        const img = new Image();
-
-        img.onload = () => {
-            let quality = 0.9;
-
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-
-            canvas.width = img.width;
-            canvas.height = img.height;
-
-            const attempt = () => {
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                canvas.toBlob((blob) => {
-                    if (blob.size > targetBytes && quality > 0.05) {
-                        quality -= 0.05;
-                        attempt();
-                    } else {
-                        downloadBlob(blob, file.name.replace(/\.\w+$/, "") + ".jpg");
-                        resolve();
-                    }
-                }, "image/jpeg", quality);
-            };
-
-            attempt();
-        };
-
-        img.src = URL.createObjectURL(file);
-    });
-}
-
-// ------------------------------------------
-// EXPORT IMAGES TO PDF
-// ------------------------------------------
-document.getElementById("runPdf").onclick = async () => {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-
-    let first = true;
-
-    for (const item of images) {
-        await new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-                const w = pdf.internal.pageSize.getWidth();
-                const h = (img.height * w) / img.width;
-
-                if (!first) pdf.addPage();
-                first = false;
-
-                pdf.addImage(img, "JPEG", 0, 10, w, h);
-                resolve();
-            };
-            img.src = item.url;
-        });
-    }
-
-    pdf.save("images.pdf");
-    showSuccess();
-};
+// PDF Tool
+document.getElementById('runPdf').addEventListener('click', () => {
+  if (!files.length) return alert('Upload image(s) first.');
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+  let processed = 0;
+  files.forEach((item, idx) => {
+    const img = new Image();
+    img.onload = () => {
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const ratio = Math.min(pageW / img.naturalWidth, pageH / img.naturalHeight);
+      const drawW = img.naturalWidth * ratio;
+      const drawH = img.naturalHeight * ratio;
+      const x = (pageW - drawW) / 2;
+      const y = (pageH - drawH) / 2;
+      if (idx > 0) pdf.addPage();
+      pdf.addImage(img, 'JPEG', x, y, drawW, drawH);
+      processed++;
+      if (processed === files.length) {
+        pdf.save(files.length > 1 ? 'images.pdf' : `${stripExt(files[0].file.name)}.pdf`);
+        alert('Successfully downloaded');
+      }
+    };
+    img.src = item.dataURL;
+  });
+});

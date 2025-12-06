@@ -1,25 +1,46 @@
-document.getElementById("quality").oninput = function () {
-    document.getElementById("qVal").innerText = this.value;
-};
+async function compressToTargetSize(file, targetKB) {
+  const target = targetKB * 1024;
+  let quality = 0.9;
 
-function compressImg() {
-    let file = document.getElementById("compressInput").files[0];
-    let q = document.getElementById("quality").value / 100;
+  const readFile = (file) =>
+    new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.readAsDataURL(file);
+    });
 
-    let img = new Image();
-    img.onload = function () {
-        let canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
+  const img = document.createElement("img");
+  img.src = await readFile(file);
 
-        let ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
+  await new Promise((r) => (img.onload = r));
 
-        let link = document.getElementById("compressDownload");
-        link.href = canvas.toDataURL("image/jpeg", q);
-        link.download = "compressed.jpg";
-        link.style.display = "inline";
-        link.innerText = "Download Compressed Image";
-    };
-    img.src = URL.createObjectURL(file);
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = img.width;
+  canvas.height = img.height;
+
+  let compressed;
+
+  while (true) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    const dataUrl = canvas.toDataURL("image/jpeg", quality);
+
+    const binary = atob(dataUrl.split(",")[1]);
+    const buffer = new ArrayBuffer(binary.length);
+    const bytes = new Uint8Array(buffer);
+
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    compressed = new Blob([buffer], { type: "image/jpeg" });
+
+    if (compressed.size <= target || quality <= 0.1) break;
+
+    quality -= 0.05;
+  }
+
+  return compressed;
 }

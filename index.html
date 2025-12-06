@@ -1,90 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QuickPic Tools — Resize · Compress · Convert · Image→PDF</title>
-  <meta name="description" content="QuickPic Tools: Resize images to KB/MB or px, compress, convert JPG/PNG/WebP and export to PDF. Works in browser, no upload." />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QuickPic — Resize • Compress • Convert • Image→PDF</title>
+  <meta name="description" content="QuickPic — Resize images to KB/MB or px, compress, convert and export to PDF. Client-side, fast." />
   <link rel="stylesheet" href="style.css" />
-
-  <!-- jsPDF library for PDF export -->
+  <!-- jsPDF for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-
   <header class="site-header">
     <div class="header-inner">
-      <div class="brand">QuickPic Tools</div>
-      <nav class="nav">
-        <button class="nav-btn active" data-tool="tool-kb">KB/MB</button>
+      <div class="brand">QuickPic</div>
+      <nav class="nav" role="navigation" aria-label="Tools">
+        <button class="nav-btn active" data-tool="tool-kb">KB / MB</button>
         <button class="nav-btn" data-tool="tool-px">W×H</button>
         <button class="nav-btn" data-tool="tool-compress">Compress</button>
         <button class="nav-btn" data-tool="tool-convert">Convert</button>
-        <button class="nav-btn" data-tool="tool-pdf">Image→PDF</button>
+        <button class="nav-btn" data-tool="tool-pdf">Image → PDF</button>
       </nav>
     </div>
   </header>
 
   <main class="main-container">
-
-    <!-- File select / drop area -->
-    <section id="select-area" class="card drop-card">
+    <!-- Select / Drop -->
+    <section id="select-area" class="card drop-card" aria-label="File selector">
       <div id="dropbox" class="dropbox">
-        <div class="drop-icon">⬆</div>
-        <div class="drop-text">Drop images here or <span id="browseText" class="link">browse</span></div>
-        <button id="selectBtn" class="btn primary">Select Images</button>
-        <input id="fileInput" type="file" accept="image/*" multiple hidden>
+        <div class="drop-ico">⬆</div>
+        <div class="drop-txt">Drop images here or <span id="browseText" class="link">browse</span></div>
+        <div class="actions">
+          <button id="selectBtn" class="btn primary">Select Images</button>
+          <input id="fileInput" type="file" accept="image/*" multiple hidden>
+        </div>
+        <div class="note">Supports JPG, PNG, WebP. All processing in your browser.</div>
       </div>
     </section>
 
-    <!-- Thumbnail previews -->
-    <section id="thumbs-area" class="card thumbs hidden">
+    <!-- Thumbnails + reset -->
+    <section id="thumbs-area" class="card thumbs hidden" aria-live="polite">
       <div id="thumb-grid" class="thumb-grid"></div>
-      <button id="resetBtn" class="btn secondary">Upload New Images</button>
+      <div class="thumb-actions">
+        <button id="resetBtn" class="btn secondary">Upload New Images</button>
+      </div>
     </section>
 
-    <!-- Tool panels -->
+    <!-- Tools -->
     <section class="tools">
 
-      <!-- Resize to target size (KB/MB) -->
-      <div id="tool-kb" class="tool-panel visible card">
+      <div id="tool-kb" class="tool-panel card visible" aria-hidden="false">
         <h2>Resize to Target Size (KB / MB)</h2>
         <div class="row">
-          <input id="targetSize" type="number" placeholder="Enter size (e.g. 100)" />
-          <select id="sizeUnit">
-            <option value="kb">KB</option>
-            <option value="mb">MB</option>
-          </select>
+          <input id="targetSize" type="number" placeholder="Enter size (e.g. 100)" min="1" />
+          <select id="sizeUnit"><option value="kb">KB</option><option value="mb">MB</option></select>
           <button id="runKb" class="btn">Start</button>
         </div>
-        <p class="hint">Tool reduces quality &/or scale to meet target size. Best for photos (JPEG).</p>
+        <p class="hint">Algorithm reduces quality & scales down until the target size. Works best on JPEG photos.</p>
       </div>
 
-      <!-- Resize by width × height -->
-      <div id="tool-px" class="tool-panel card">
+      <div id="tool-px" class="tool-panel card" aria-hidden="true">
         <h2>Resize by Width × Height (px)</h2>
         <div class="row">
-          <input id="widthPx" type="number" placeholder="Width (px)" />
-          <input id="heightPx" type="number" placeholder="Height (px)" />
+          <input id="widthPx" type="number" placeholder="Width (px)" min="1" />
+          <input id="heightPx" type="number" placeholder="Height (px)" min="1" />
         </div>
         <div class="row">
-          <label><input id="keepAspect" type="checkbox" checked /> Maintain aspect ratio</label>
+          <label class="muted"><input id="keepAspect" type="checkbox" checked /> Maintain aspect ratio</label>
           <button id="runPx" class="btn">Resize & Download</button>
         </div>
       </div>
 
-      <!-- Compress image quality -->
-      <div id="tool-compress" class="tool-panel card">
+      <div id="tool-compress" class="tool-panel card" aria-hidden="true">
         <h2>Compress Image (Quality)</h2>
         <div class="row">
           <label>Quality: <span id="qualityVal">70</span>%</label>
           <input id="qualitySlider" type="range" min="10" max="95" value="70" />
         </div>
-        <button id="runCompress" class="btn">Compress & Download</button>
+        <div class="row">
+          <button id="runCompress" class="btn">Compress & Download</button>
+        </div>
       </div>
 
-      <!-- Convert image format -->
-      <div id="tool-convert" class="tool-panel card">
+      <div id="tool-convert" class="tool-panel card" aria-hidden="true">
         <h2>Convert Image Format</h2>
         <div class="row">
           <select id="convertFormat">
@@ -96,19 +93,18 @@
         </div>
       </div>
 
-      <!-- Image → PDF -->
-      <div id="tool-pdf" class="tool-panel card">
+      <div id="tool-pdf" class="tool-panel card" aria-hidden="true">
         <h2>Export Selected Images as PDF</h2>
-        <button id="runPdf" class="btn">Export PDF</button>
+        <div class="row">
+          <label class="muted">Each selected image becomes one PDF page.</label>
+          <button id="runPdf" class="btn">Export PDF</button>
+        </div>
       </div>
 
     </section>
-
   </main>
 
-  <footer class="site-footer">
-    © QuickPic Tools — Privacy First, No Uploads.
-  </footer>
+  <footer class="site-footer">© QuickPic — Privacy first. Files processed in your browser.</footer>
 
   <script src="script.js"></script>
 </body>

@@ -6,7 +6,6 @@
   <title>QuickPic — Resize • Compress • Convert • Image→PDF</title>
   <meta name="description" content="QuickPic — Resize images to KB/MB or px, compress, convert and export to PDF. Client-side, fast." />
   <link rel="stylesheet" href="style.css" />
-  <!-- jsPDF for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
@@ -24,41 +23,42 @@
   </header>
 
   <main class="main-container">
-    <!-- Select / Drop -->
-    <section id="select-area" class="card drop-card" aria-label="File selector">
+
+    <!-- Upload Area -->
+    <section id="select-area" class="card drop-card">
       <div id="dropbox" class="dropbox">
-        <div class="drop-ico">⬆</div>
+        <div class="drop-ico">Upload</div>
         <div class="drop-txt">Drop images here or <span id="browseText" class="link">browse</span></div>
         <div class="actions">
-          <button id="selectBtn" class="btn primary">Select Images</button>
+          <button id="selectBtn" class="btn">Select Images</button>
           <input id="fileInput" type="file" accept="image/*" multiple hidden>
         </div>
-        <div class="note">Supports JPG, PNG, WebP. All processing in your browser.</div>
+        <div class="note">Supports JPG, PNG, WebP • All processing in your browser</div>
       </div>
     </section>
 
-    <!-- Thumbnails + reset -->
-    <section id="thumbs-area" class="card thumbs hidden" aria-live="polite">
+    <!-- Thumbnails -->
+    <section id="thumbs-area" class="card thumbs hidden">
       <div id="thumb-grid" class="thumb-grid"></div>
       <div class="thumb-actions">
         <button id="resetBtn" class="btn secondary">Upload New Images</button>
       </div>
     </section>
 
-    <!-- Tools -->
+    <!-- Tools Section -->
     <section class="tools">
 
-      <div id="tool-kb" class="tool-panel card visible" aria-hidden="false">
+      <div id="tool-kb" class="tool-panel card visible">
         <h2>Resize to Target Size (KB / MB)</h2>
         <div class="row">
           <input id="targetSize" type="number" placeholder="Enter size (e.g. 100)" min="1" />
           <select id="sizeUnit"><option value="kb">KB</option><option value="mb">MB</option></select>
           <button id="runKb" class="btn">Start</button>
         </div>
-        <p class="hint">Algorithm reduces quality & scales down until the target size. Works best on JPEG photos.</p>
+        <p class="hint">Reduces quality & scales down until target size is reached.</p>
       </div>
 
-      <div id="tool-px" class="tool-panel card" aria-hidden="true">
+      <div id="tool-px" class="tool-panel card">
         <h2>Resize by Width × Height (px)</h2>
         <div class="row">
           <input id="widthPx" type="number" placeholder="Width (px)" min="1" />
@@ -70,7 +70,7 @@
         </div>
       </div>
 
-      <div id="tool-compress" class="tool-panel card" aria-hidden="true">
+      <div id="tool-compress" class="tool-panel card">
         <h2>Compress Image (Quality)</h2>
         <div class="row">
           <label>Quality: <span id="qualityVal">70</span>%</label>
@@ -81,7 +81,7 @@
         </div>
       </div>
 
-      <div id="tool-convert" class="tool-panel card" aria-hidden="true">
+      <div id="tool-convert" class="tool-panel card">
         <h2>Convert Image Format</h2>
         <div class="row">
           <select id="convertFormat">
@@ -93,10 +93,10 @@
         </div>
       </div>
 
-      <div id="tool-pdf" class="tool-panel card" aria-hidden="true">
+      <div id="tool-pdf" class="tool-panel card">
         <h2>Export Selected Images as PDF</h2>
         <div class="row">
-          <label class="muted">Each selected image becomes one PDF page.</label>
+          <label class="muted">Each image becomes one PDF page (A4, centered).</label>
           <button id="runPdf" class="btn">Export PDF</button>
         </div>
       </div>

@@ -1,4 +1,3 @@
-// QuickPic - Final Fixed: Convert only JPG/PNG with correct extension & alert instead of pop-up
 const fileInput = document.getElementById('fileInput');
 const selectBtn = document.getElementById('selectBtn');
 const dropbox = document.getElementById('dropbox');
@@ -21,31 +20,47 @@ const convertFormat = document.getElementById('convertFormat');
 
 let files = [];
 
-// Drag & Drop Highlight
-['dragenter', 'dragover'].forEach(e => dropbox.addEventListener(e, () => dropbox.classList.add('dragover')));
-['dragleave', 'drop'].forEach(e => dropbox.addEventListener(e, () => dropbox.classList.remove('dragover')));
-dropbox.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); handleFiles(e.dataTransfer.files); });
+// Drag highlight
+['dragenter', 'dragover'].forEach(e =>
+  dropbox.addEventListener(e, () => dropbox.classList.add('dragover'))
+);
+['dragleave', 'drop'].forEach(e =>
+  dropbox.addEventListener(e, () => dropbox.classList.remove('dragover'))
+);
 
-// File selection
+// Drop
+dropbox.addEventListener('drop', e => {
+  e.preventDefault();
+  handleFiles(e.dataTransfer.files);
+});
+
+// File select
 selectBtn.onclick = browseText.onclick = () => fileInput.click();
 fileInput.onchange = e => handleFiles(e.target.files);
 resetBtn.onclick = resetAll;
 
-// Tool Switching - EK HI TOOL DIKHEGA
+// TAB SWITCH – Only one tool visible
 navButtons.forEach(btn => {
   btn.onclick = () => {
     navButtons.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+
     const toolId = btn.dataset.tool;
-    toolPanels.forEach(p => p.classList.toggle('visible', p.id === toolId));
+
+    toolPanels.forEach(p =>
+      p.classList.toggle('visible', p.id === toolId)
+    );
   };
 });
 
-// Handle Files
-function handleFiles(fileList) {
-  const valid = Array.from(fileList).filter(f => f.type.startsWith('image/'));
-  if (!valid.length) return alert('Please select valid images (JPG/PNG/WebP)');
-  files = []; thumbGrid.innerHTML = '';
+// Load files
+function handleFiles(list) {
+  const valid = [...list].filter(f => f.type.startsWith('image/'));
+  if (!valid.length) return alert('Please select valid images');
+
+  files = [];
+  thumbGrid.innerHTML = '';
+
   let loaded = 0;
 
   valid.forEach(file => {
@@ -53,9 +68,18 @@ function handleFiles(fileList) {
     reader.onload = e => {
       const img = new Image();
       img.onload = () => {
-        files.push({ file, dataURL: e.target.result, width: img.naturalWidth, height: img.naturalHeight });
+        files.push({
+          file,
+          dataURL: e.target.result,
+          width: img.naturalWidth,
+          height: img.naturalHeight
+        });
         addThumb(file.name, e.target.result, img.naturalWidth, img.naturalHeight, file.size);
-        if (++loaded === valid.length) afterFilesLoaded();
+
+        if (++loaded === valid.length) {
+          document.getElementById('select-area').style.display = 'none';
+          thumbsArea.classList.remove('hidden');
+        }
       };
       img.src = e.target.result;
     };
@@ -63,228 +87,223 @@ function handleFiles(fileList) {
   });
 }
 
-function addThumb(name, src, w, h, sizeKB) {
+function addThumb(name, src, w, h, size) {
   const div = document.createElement('div');
   div.className = 'thumb-item';
-  div.innerHTML = `<img src="\( {src}" alt=" \){name}">
-    <div class="thumb-meta">\( {name}<br> \){(sizeKB/1024).toFixed(1)} KB<br>\( {w}× \){h}</div>`;
+  div.innerHTML = `
+      <img src="${src}">
+      <div class="thumb-meta">${name}<br>${(size/1024).toFixed(1)} KB<br>${w}×${h}</div>
+  `;
   thumbGrid.appendChild(div);
 }
 
-function afterFilesLoaded() {
-  document.getElementById('select-area').style.display = 'none';
-  thumbsArea.classList.remove('hidden');
-}
-
-// Reset
 function resetAll() {
-  files = []; thumbGrid.innerHTML = ''; fileInput.value = '';
+  files = [];
+  thumbGrid.innerHTML = '';
+  fileInput.value = '';
   thumbsArea.classList.add('hidden');
   document.getElementById('select-area').style.display = 'block';
 }
 
-// Utility: dataURL to Blob
+// Utility
 function dataURLtoBlob(dataURL) {
   const arr = dataURL.split(',');
   const mime = arr[0].match(/:(.*?);/)[1];
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
+  const bin = atob(arr[1]);
+  let n = bin.length;
   const u8 = new Uint8Array(n);
-  while (n--) u8[n] = bstr.charCodeAt(n);
+  while (n--) u8[n] = bin.charCodeAt(n);
   return new Blob([u8], { type: mime });
 }
 
-// Utility: Download Blob
 function downloadBlob(blob, name) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = name; a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 100);
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 150);
 }
 
-// Utility: Strip Extension
-function stripExt(name) {
-  return name.replace(/\.[^/.]+$/, '');
+function stripExt(n) {
+  return n.replace(/\.[^/.]+$/, '');
 }
 
-// KB/MB Resize Tool - Fixed with ±10 KB Range (e.g., 490-510 for 500)
+// KB Resize
 async function compressToTargetSize(file, targetKB) {
   const targetBytes = targetKB * 1024;
-  const minBytes = (targetKB - 10) * 1024; // Min range
-  const maxBytes = (targetKB + 10) * 1024; // Max range
-  const read = f => new Promise(res => {
-    const r = new FileReader();
-    r.onload = e => res(e.target.result);
-    r.readAsDataURL(f);
-  });
-  const dataURL = await read(file);
+  const minBytes = (targetKB - 10) * 1024;
+  const maxBytes = (targetKB + 10) * 1024;
+
+  const r = new FileReader();
+  const dataURL = await new Promise(res => { r.onload = e => res(e.target.result); r.readAsDataURL(file); });
+
   const img = new Image();
   img.src = dataURL;
-  await new Promise(r => img.onload = r);
+  await new Promise(res => img.onload = res);
 
-  let canvas = document.createElement('canvas');
-  let ctx = canvas.getContext('2d');
-  canvas.width = img.naturalWidth;
-  canvas.height = img.naturalHeight;
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
 
+  let scale = 1;
   let quality = 0.95;
-  let scale = 1.0;
-  let resultBlob = null;
+  let finalBlob = null;
 
-  for (let iter = 0; iter < 30; iter++) { // More iterations for precision
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const w = Math.max(1, Math.round(img.naturalWidth * scale));
-    const h = Math.max(1, Math.round(img.naturalHeight * scale));
-    canvas.width = w; canvas.height = h;
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, w, h);
+  for (let i = 0; i < 30; i++) {
+    const w = Math.round(img.naturalWidth * scale);
+    const h = Math.round(img.naturalHeight * scale);
+
+    canvas.width = w;
+    canvas.height = h;
     ctx.drawImage(img, 0, 0, w, h);
-    const data = canvas.toDataURL('image/jpeg', quality);
-    const blob = dataURLtoBlob(data);
+
+    const out = canvas.toDataURL('image/jpeg', quality);
+    const blob = dataURLtoBlob(out);
     const size = blob.size;
-    if (size >= minBytes && size <= maxBytes) {
-      resultBlob = blob;
+
+    if (size > maxBytes) {
+      quality -= 0.05;
+      if (quality < 0.25) scale -= 0.05;
+    } else if (size < minBytes) {
+      quality += 0.05;
+      if (quality > 0.95) scale += 0.03;
+    } else {
+      finalBlob = blob;
       break;
     }
-    // Finer adjustments
-    if (size > maxBytes) {
-      if (quality > 0.20) quality -= 0.04; // Smaller step down
-      else scale -= 0.03;
-    } else if (size < minBytes) {
-      if (quality < 0.95) quality += 0.03; // Step up if under
-      else scale += 0.02;
-    }
   }
 
-  if (!resultBlob) {
-    // Fallback to closest
-    const data = canvas.toDataURL('image/jpeg', quality);
-    resultBlob = dataURLtoBlob(data);
-  }
-  return resultBlob;
+  return finalBlob;
 }
 
-document.getElementById('runKb').addEventListener('click', async () => {
+document.getElementById('runKb').onclick = async () => {
   if (!files.length) return alert('Upload image(s) first.');
-  const val = Number(targetSizeEl.value);
-  if (!val || val <= 0) return alert('Enter valid size.');
-  const unit = sizeUnitEl.value;
-  const targetKB = unit === 'mb' ? val * 1024 : val;
-  for (const item of files) {
-    try {
-      const out = await compressToTargetSize(item.file, targetKB);
-      downloadBlob(out, `\( {stripExt(item.file.name)}-to- \){Math.round(targetKB)}KB.jpg`);
-    } catch (err) {
-      console.error(err);
-      alert('Error processing ' + item.file.name);
-    }
-  }
-  alert('Successfully downloaded');
-});
 
-// PX Resize Tool
-document.getElementById('runPx').addEventListener('click', () => {
+  let val = Number(targetSizeEl.value);
+  if (!val) return alert('Enter valid size');
+
+  if (sizeUnitEl.value === 'mb') val *= 1024;
+
+  for (const f of files) {
+    const out = await compressToTargetSize(f.file, val);
+    downloadBlob(out, `${stripExt(f.file.name)}-${val}KB.jpg`);
+  }
+
+  alert('Completed!');
+};
+
+// PX Resize
+document.getElementById('runPx').onclick = () => {
   if (!files.length) return alert('Upload image(s) first.');
+
   const w = Number(widthPxEl.value);
   const h = Number(heightPxEl.value);
   const keep = keepAspectEl.checked;
-  if (!w && !h) return alert('Enter width or height.');
-  let processed = 0;
-  files.forEach(item => {
+
+  if (!w && !h) return alert('Enter width or height');
+
+  files.forEach(f => {
     const img = new Image();
+
     img.onload = () => {
       let tw = w || img.naturalWidth;
       let th = h || img.naturalHeight;
+
       if (keep) {
-        if (w && !h) th = Math.round(img.naturalHeight * (w / img.naturalWidth));
-        else if (h && !w) tw = Math.round(img.naturalWidth * (h / img.naturalHeight));
+        if (w && !h) th = Math.round((img.naturalHeight * w) / img.naturalWidth);
+        else if (h && !w) tw = Math.round((img.naturalWidth * h) / img.naturalHeight);
       }
+
       const c = document.createElement('canvas');
-      c.width = tw; c.height = th;
+      c.width = tw;
+      c.height = th;
       c.getContext('2d').drawImage(img, 0, 0, tw, th);
-      c.toBlob(blob => {
-        downloadBlob(blob, `\( {stripExt(item.file.name)}-resized- \){tw}x${th}.jpg`);
-        processed++;
-        if (processed === files.length) alert('Successfully downloaded');
-      }, 'image/jpeg', 0.92);
+
+      c.toBlob(b => downloadBlob(b, `${stripExt(f.file.name)}-${tw}x${th}.jpg`), 'image/jpeg', 0.92);
     };
-    img.src = item.dataURL;
+
+    img.src = f.dataURL;
   });
-});
+
+  alert('Completed!');
+};
 
 // Compress Tool
-qualitySlider.addEventListener('input', () => qualityVal.textContent = qualitySlider.value);
-document.getElementById('runCompress').addEventListener('click', () => {
+qualitySlider.oninput = () => qualityVal.textContent = qualitySlider.value;
+
+document.getElementById('runCompress').onclick = () => {
   if (!files.length) return alert('Upload image(s) first.');
-  const q = Number(qualitySlider.value) / 100;
-  let processed = 0;
-  files.forEach(item => {
+
+  const q = qualitySlider.value / 100;
+
+  files.forEach(f => {
     const img = new Image();
     img.onload = () => {
       const c = document.createElement('canvas');
-      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
       c.getContext('2d').drawImage(img, 0, 0);
-      c.toBlob(blob => {
-        downloadBlob(blob, `${stripExt(item.file.name)}-compressed.jpg`);
-        processed++;
-        if (processed === files.length) alert('Successfully downloaded');
-      }, 'image/jpeg', q);
-    };
-    img.src = item.dataURL;
-  });
-});
 
-// Convert Tool - Fixed: Only JPG/PNG, correct extension & MIME, alert at end
-document.getElementById('runConvert').addEventListener('click', () => {
+      c.toBlob(b => downloadBlob(b, `${stripExt(f.file.name)}-compressed.jpg`), 'image/jpeg', q);
+    };
+    img.src = f.dataURL;
+  });
+
+  alert('Completed!');
+};
+
+// Convert Tool
+document.getElementById('runConvert').onclick = () => {
   if (!files.length) return alert('Upload image(s) first.');
+
   const fmt = convertFormat.value;
-  const extMap = {
-    'image/jpeg': '.jpg',
-    'image/png': '.png'
-  };
-  const ext = extMap[fmt] || '.jpg';
-  const quality = fmt === 'image/jpeg' ? 0.92 : undefined; // No quality for PNG
-  let processed = 0;
-  files.forEach(item => {
+  const ext = fmt === 'image/png' ? '.png' : '.jpg';
+
+  files.forEach(f => {
     const img = new Image();
     img.onload = () => {
       const c = document.createElement('canvas');
-      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
       c.getContext('2d').drawImage(img, 0, 0);
-      c.toBlob(blob => {
-        downloadBlob(blob, `\( {stripExt(item.file.name)} \){ext}`);
-        processed++;
-        if (processed === files.length) alert('Successfully downloaded');
-      }, fmt, quality);
-    };
-    img.src = item.dataURL;
-  });
-});
 
-// PDF Tool
-document.getElementById('runPdf').addEventListener('click', () => {
+      c.toBlob(b => downloadBlob(b, `${stripExt(f.file.name)}${ext}`), fmt);
+    };
+    img.src = f.dataURL;
+  });
+
+  alert('Completed!');
+};
+
+// PDF
+document.getElementById('runPdf').onclick = () => {
   if (!files.length) return alert('Upload image(s) first.');
+
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
-  let processed = 0;
-  files.forEach((item, idx) => {
+
+  files.forEach((f, idx) => {
     const img = new Image();
     img.onload = () => {
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const ratio = Math.min(pageW / img.naturalWidth, pageH / img.naturalHeight);
-      const drawW = img.naturalWidth * ratio;
-      const drawH = img.naturalHeight * ratio;
-      const x = (pageW - drawW) / 2;
-      const y = (pageH - drawH) / 2;
+      const pw = pdf.internal.pageSize.getWidth();
+      const ph = pdf.internal.pageSize.getHeight();
+
+      const ratio = Math.min(pw / img.naturalWidth, ph / img.naturalHeight);
+
+      const w = img.naturalWidth * ratio;
+      const h = img.naturalHeight * ratio;
+
+      const x = (pw - w) / 2;
+      const y = (ph - h) / 2;
+
       if (idx > 0) pdf.addPage();
-      pdf.addImage(img, 'JPEG', x, y, drawW, drawH);
-      processed++;
-      if (processed === files.length) {
-        pdf.save(files.length > 1 ? 'images.pdf' : `${stripExt(files[0].file.name)}.pdf`);
-        alert('Successfully downloaded');
+      pdf.addImage(img, 'JPEG', x, y, w, h);
+
+      if (idx === files.length - 1) {
+        pdf.save('images.pdf');
+        alert('PDF Ready!');
       }
     };
-    img.src = item.dataURL;
+    img.src = f.dataURL;
   });
-});
+};

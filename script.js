@@ -107,10 +107,11 @@ function stripExt(name) {
   return name.replace(/\.[^/.]+$/, '');
 }
 
-// KB/MB Resize Tool - Fixed with ±10 KB Tolerance
+// KB/MB Resize Tool - Fixed with ±10 KB Range (e.g., 490-510 for 500)
 async function compressToTargetSize(file, targetKB) {
   const targetBytes = targetKB * 1024;
-  const toleranceBytes = 10 * 1024; // ±10 KB
+  const minBytes = (targetKB - 10) * 1024; // Min range
+  const maxBytes = (targetKB + 10) * 1024; // Max range
   const read = f => new Promise(res => {
     const r = new FileReader();
     r.onload = e => res(e.target.result);
@@ -130,7 +131,7 @@ async function compressToTargetSize(file, targetKB) {
   let scale = 1.0;
   let resultBlob = null;
 
-  for (let iter = 0; iter < 25; iter++) { // Increased iterations for better approximation
+  for (let iter = 0; iter < 30; iter++) { // More iterations for precision
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const w = Math.max(1, Math.round(img.naturalWidth * scale));
     const h = Math.max(1, Math.round(img.naturalHeight * scale));
@@ -140,23 +141,23 @@ async function compressToTargetSize(file, targetKB) {
     ctx.drawImage(img, 0, 0, w, h);
     const data = canvas.toDataURL('image/jpeg', quality);
     const blob = dataURLtoBlob(data);
-    const sizeDiff = blob.size - targetBytes;
-    if (Math.abs(sizeDiff) <= toleranceBytes || (quality <= 0.10 && scale <= 0.30)) {
+    const size = blob.size;
+    if (size >= minBytes && size <= maxBytes) {
       resultBlob = blob;
       break;
     }
-    // Adjust more finely
-    if (sizeDiff > 0) {
-      if (quality > 0.20) quality -= 0.05;
-      else scale -= 0.05;
-    } else {
-      // If under, slightly increase quality or scale to get closer
-      if (quality < 0.95) quality += 0.02;
+    // Finer adjustments
+    if (size > maxBytes) {
+      if (quality > 0.20) quality -= 0.04; // Smaller step down
+      else scale -= 0.03;
+    } else if (size < minBytes) {
+      if (quality < 0.95) quality += 0.03; // Step up if under
       else scale += 0.02;
     }
   }
 
   if (!resultBlob) {
+    // Fallback to closest
     const data = canvas.toDataURL('image/jpeg', quality);
     resultBlob = dataURLtoBlob(data);
   }
@@ -223,7 +224,7 @@ document.getElementById('runCompress').addEventListener('click', () => {
   });
 });
 
-// Convert Tool - Fixed Extensions
+// Convert Tool - Fixed: Quality only for JPEG
 document.getElementById('runConvert').addEventListener('click', () => {
   if (!files.length) return alert('Upload image(s) first.');
   const fmt = convertFormat.value;
@@ -232,14 +233,15 @@ document.getElementById('runConvert').addEventListener('click', () => {
     'image/png': '.png',
     'image/webp': '.webp'
   };
-  const ext = extMap[fmt] || '.jpg'; // Fallback to jpg
+  const ext = extMap[fmt] || '.jpg';
+  const quality = (fmt === 'image/jpeg' || fmt === 'image/webp') ? 0.92 : undefined; // No quality for PNG (lossless)
   files.forEach(item => {
     const img = new Image();
     img.onload = () => {
       const c = document.createElement('canvas');
       c.width = img.naturalWidth; c.height = img.naturalHeight;
       c.getContext('2d').drawImage(img, 0, 0);
-      c.toBlob(blob => downloadBlob(blob, `\( {stripExt(item.file.name)} \){ext}`), fmt, 0.92); // Added quality for non-lossless
+      c.toBlob(blob => downloadBlob(blob, `\( {stripExt(item.file.name)} \){ext}`), fmt, quality);
     };
     img.src = item.dataURL;
   });

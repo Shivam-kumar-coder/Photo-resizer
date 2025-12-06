@@ -1,77 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Tools - Resize, Compress, Convert</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>No.1 Photo Resizer</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background:#f5f7ff;
+        text-align:center;
+        margin:0;
+        padding:0;
+    }
+
+    h1 {
+        margin-top:40px;
+        color:#2e5bff;
+        font-size:28px;
+        font-weight:800;
+    }
+
+    /* Header Menu */
+    .menu {
+        width:90%;
+        margin:20px auto;
+        padding:15px;
+        border:3px solid #2e5bff;
+        border-radius:12px;
+        display:flex;
+        justify-content:space-around;
+        font-size:18px;
+        font-weight:600;
+        color:#2e5bff;
+    }
+
+    .menu div {
+        cursor:pointer;
+        padding:5px 10px;
+        transition:0.3s;
+    }
+
+    .menu div:hover {
+        background:#2e5bff;
+        color:white;
+        border-radius:6px;
+    }
+
+    /* Select Box Area */
+    .select-box-area {
+        width:90%;
+        margin:30px auto;
+        padding:40px 0;
+        border:3px solid #2e5bff;
+        border-radius:12px;
+        display:block;
+    }
+
+    .select-btn {
+        width:250px;
+        margin:auto;
+        padding:18px;
+        border:3px solid #2e5bff;
+        font-size:22px;
+        border-radius:12px;
+        cursor:pointer;
+        color:#2e5bff;
+        background:white;
+        transition:0.3s;
+    }
+
+    .select-btn:hover {
+        background:#2e5bff;
+        color:white;
+    }
+
+    /* Tools Hidden Initially */
+    .tool-box {
+        width:90%;
+        margin:30px auto;
+        padding:30px;
+        border:3px solid #2e5bff;
+        border-radius:12px;
+        display:none;
+    }
+
+    /* Bottom boxes */
+    .bottom-section {
+        display:flex;
+        justify-content:center;
+        gap:20px;
+        margin-top:40px;
+        flex-wrap:wrap;
+    }
+
+    .bottom-card {
+        width:200px;
+        height:120px;
+        padding:30px;
+        border:3px solid #2e5bff;
+        border-radius:12px;
+        font-size:20px;
+        font-weight:600;
+        color:#2e5bff;
+    }
+</style>
 </head>
 
 <body>
 
-    <header>
-        <nav class="tabs">
-            <button class="tab-btn active" data-tab="resizekb">Resize KB</button>
-            <button class="tab-btn" data-tab="resizepx">Resize PX</button>
-            <button class="tab-btn" data-tab="compress">Compress</button>
-            <button class="tab-btn" data-tab="convert">Convert</button>
-            <button class="tab-btn" data-tab="pdf">Image → PDF</button>
-        </nav>
-    </header>
+<h1>No.1 Photo Resizer</h1>
 
-    <main>
+<!-- MENU -->
+<div class="menu">
+    <div onclick="openTool('kb')">KB / MB</div>
+    <div onclick="openTool('pdf')">Convert PDF</div>
+    <div onclick="openTool('size')">HW / WH</div>
+    <div onclick="openTool('compress')">Compress</div>
+</div>
 
-        <!-- FILE SELECT BOX -->
-        <div class="file-box">
-            <input type="file" id="fileInput" accept="image/*">
-            <label for="fileInput">Select Image</label>
-        </div>
+<!-- SELECT BOX AREA -->
+<div id="selectArea" class="select-box-area">
+    <div class="select-btn">Select Box</div>
+</div>
 
-        <img id="preview" class="preview" style="display:none;"/>
+<!-- TOOL SECTIONS -->
 
-        <!-- TOOLS -->
+<div id="kb" class="tool-box">
+    <h2>Resize to KB / MB</h2>
+    <input type="file"> <br><br>
+    <input type="number" placeholder="Size KB">
+</div>
 
-        <!-- Resize KB -->
-        <section class="tab-content active" id="resizekb">
-            <h3>Resize by KB</h3>
-            <input type="number" id="targetKB" placeholder="Enter target size (KB)">
-            <button onclick="resizeToKB()">Resize</button>
-        </section>
+<div id="pdf" class="tool-box">
+    <h2>Convert Image to PDF</h2>
+    <input type="file"> <br><br>
+    <button>Convert</button>
+</div>
 
-        <!-- Resize PX -->
-        <section class="tab-content" id="resizepx">
-            <h3>Resize by Dimensions</h3>
-            <input type="number" id="widthPX" placeholder="Width (px)">
-            <input type="number" id="heightPX" placeholder="Height (px)">
-            <button onclick="resizePX()">Resize</button>
-        </section>
+<div id="size" class="tool-box">
+    <h2>Resize Height / Width</h2>
+    <input type="file"> <br><br>
+    <input type="number" placeholder="Width">
+    <input type="number" placeholder="Height">
+</div>
 
-        <!-- Compress -->
-        <section class="tab-content" id="compress">
-            <h3>Compress Image</h3>
-            <input type="range" id="quality" min="10" max="100" value="70">
-            <span id="qval">70%</span>
-            <button onclick="compress()">Compress</button>
-        </section>
+<div id="compress" class="tool-box">
+    <h2>Compress Image</h2>
+    <input type="file"> <br><br>
+    <input type="range">
+</div>
 
-        <!-- Convert -->
-        <section class="tab-content" id="convert">
-            <h3>Convert</h3>
-            <select id="format">
-                <option value="image/jpeg">JPG</option>
-                <option value="image/png">PNG</option>
-            </select>
-            <button onclick="convertImage()">Convert</button>
-        </section>
+<!-- BOTTOM CONTENT -->
+<div class="bottom-section">
+    <div class="bottom-card">Content etc</div>
+    <div class="bottom-card">Content etc</div>
+</div>
 
-        <!-- PDF -->
-        <section class="tab-content" id="pdf">
-            <h3>Image → PDF</h3>
-            <button onclick="makePDF()">Create PDF</button>
-        </section>
+<script>
+function openTool(toolId) {
+    document.getElementById("selectArea").style.display = "none";
 
-    </main>
+    let tools = document.getElementsByClassName("tool-box");
+    for (let t of tools) t.style.display = "none";
 
-<script src="script.js"></script>
+    document.getElementById(toolId).style.display = "block";
+}
+</script>
+
 </body>
 </html>

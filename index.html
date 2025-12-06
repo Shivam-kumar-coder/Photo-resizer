@@ -14,10 +14,10 @@
       <div class="brand">QuickPic</div>
       <nav class="nav" role="navigation" aria-label="Tools">
         <button class="nav-btn active" data-tool="tool-kb">KB / MB</button>
-        <button class="nav-btn" data-tool="tool-px">W×H</button>
-        <button class="nav-btn" data-tool="tool-compress">Compress</button>
-        <button class="nav-btn" data-tool="tool-convert">Convert</button>
         <button class="nav-btn" data-tool="tool-pdf">Image → PDF</button>
+        <button class="nav-btn" data-tool="tool-px">W×H</button>
+        <button class="nav-btn" data-tool="tool-convert">Convert</button>
+        <button class="nav-btn" data-tool="tool-compress">Compress</button>
       </nav>
     </div>
   </header>
@@ -55,7 +55,15 @@
           <select id="sizeUnit"><option value="kb">KB</option><option value="mb">MB</option></select>
           <button id="runKb" class="btn">Start</button>
         </div>
-        <p class="hint">Reduces quality & scales down until target size is reached.</p>
+        <p class="hint">Reduces quality & scales down to approx. target size (±10 KB tolerance).</p>
+      </div>
+
+      <div id="tool-pdf" class="tool-panel card">
+        <h2>Export Selected Images as PDF</h2>
+        <div class="row">
+          <label class="muted">Each image becomes one PDF page (A4, centered).</label>
+          <button id="runPdf" class="btn">Export PDF</button>
+        </div>
       </div>
 
       <div id="tool-px" class="tool-panel card">
@@ -67,17 +75,6 @@
         <div class="row">
           <label class="muted"><input id="keepAspect" type="checkbox" checked /> Maintain aspect ratio</label>
           <button id="runPx" class="btn">Resize & Download</button>
-        </div>
-      </div>
-
-      <div id="tool-compress" class="tool-panel card">
-        <h2>Compress Image (Quality)</h2>
-        <div class="row">
-          <label>Quality: <span id="qualityVal">70</span>%</label>
-          <input id="qualitySlider" type="range" min="10" max="95" value="70" />
-        </div>
-        <div class="row">
-          <button id="runCompress" class="btn">Compress & Download</button>
         </div>
       </div>
 
@@ -93,11 +90,14 @@
         </div>
       </div>
 
-      <div id="tool-pdf" class="tool-panel card">
-        <h2>Export Selected Images as PDF</h2>
+      <div id="tool-compress" class="tool-panel card">
+        <h2>Compress Image (Quality)</h2>
         <div class="row">
-          <label class="muted">Each image becomes one PDF page (A4, centered).</label>
-          <button id="runPdf" class="btn">Export PDF</button>
+          <label>Quality: <span id="qualityVal">70</span>%</label>
+          <input id="qualitySlider" type="range" min="10" max="95" value="70" />
+        </div>
+        <div class="row">
+          <button id="runCompress" class="btn">Compress & Download</button>
         </div>
       </div>
 

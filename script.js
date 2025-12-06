@@ -1,4 +1,4 @@
-// QuickPic - Fixed Version with Tolerance in KB/MB & Correct Extensions
+// QuickPic - Final Fixed: Convert only JPG/PNG with correct extension & alert instead of pop-up
 const fileInput = document.getElementById('fileInput');
 const selectBtn = document.getElementById('selectBtn');
 const dropbox = document.getElementById('dropbox');
@@ -179,7 +179,7 @@ document.getElementById('runKb').addEventListener('click', async () => {
       alert('Error processing ' + item.file.name);
     }
   }
-  alert('Processing finished.');
+  alert('Successfully downloaded');
 });
 
 // PX Resize Tool
@@ -189,6 +189,7 @@ document.getElementById('runPx').addEventListener('click', () => {
   const h = Number(heightPxEl.value);
   const keep = keepAspectEl.checked;
   if (!w && !h) return alert('Enter width or height.');
+  let processed = 0;
   files.forEach(item => {
     const img = new Image();
     img.onload = () => {
@@ -201,7 +202,11 @@ document.getElementById('runPx').addEventListener('click', () => {
       const c = document.createElement('canvas');
       c.width = tw; c.height = th;
       c.getContext('2d').drawImage(img, 0, 0, tw, th);
-      c.toBlob(blob => downloadBlob(blob, `\( {stripExt(item.file.name)}-resized- \){tw}x${th}.jpg`), 'image/jpeg', 0.92);
+      c.toBlob(blob => {
+        downloadBlob(blob, `\( {stripExt(item.file.name)}-resized- \){tw}x${th}.jpg`);
+        processed++;
+        if (processed === files.length) alert('Successfully downloaded');
+      }, 'image/jpeg', 0.92);
     };
     img.src = item.dataURL;
   });
@@ -212,36 +217,45 @@ qualitySlider.addEventListener('input', () => qualityVal.textContent = qualitySl
 document.getElementById('runCompress').addEventListener('click', () => {
   if (!files.length) return alert('Upload image(s) first.');
   const q = Number(qualitySlider.value) / 100;
+  let processed = 0;
   files.forEach(item => {
     const img = new Image();
     img.onload = () => {
       const c = document.createElement('canvas');
       c.width = img.naturalWidth; c.height = img.naturalHeight;
       c.getContext('2d').drawImage(img, 0, 0);
-      c.toBlob(blob => downloadBlob(blob, `${stripExt(item.file.name)}-compressed.jpg`), 'image/jpeg', q);
+      c.toBlob(blob => {
+        downloadBlob(blob, `${stripExt(item.file.name)}-compressed.jpg`);
+        processed++;
+        if (processed === files.length) alert('Successfully downloaded');
+      }, 'image/jpeg', q);
     };
     img.src = item.dataURL;
   });
 });
 
-// Convert Tool - Fixed: Quality only for JPEG
+// Convert Tool - Fixed: Only JPG/PNG, correct extension & MIME, alert at end
 document.getElementById('runConvert').addEventListener('click', () => {
   if (!files.length) return alert('Upload image(s) first.');
   const fmt = convertFormat.value;
   const extMap = {
     'image/jpeg': '.jpg',
-    'image/png': '.png',
-    'image/webp': '.webp'
+    'image/png': '.png'
   };
   const ext = extMap[fmt] || '.jpg';
-  const quality = (fmt === 'image/jpeg' || fmt === 'image/webp') ? 0.92 : undefined; // No quality for PNG (lossless)
+  const quality = fmt === 'image/jpeg' ? 0.92 : undefined; // No quality for PNG
+  let processed = 0;
   files.forEach(item => {
     const img = new Image();
     img.onload = () => {
       const c = document.createElement('canvas');
       c.width = img.naturalWidth; c.height = img.naturalHeight;
       c.getContext('2d').drawImage(img, 0, 0);
-      c.toBlob(blob => downloadBlob(blob, `\( {stripExt(item.file.name)} \){ext}`), fmt, quality);
+      c.toBlob(blob => {
+        downloadBlob(blob, `\( {stripExt(item.file.name)} \){ext}`);
+        processed++;
+        if (processed === files.length) alert('Successfully downloaded');
+      }, fmt, quality);
     };
     img.src = item.dataURL;
   });
@@ -268,6 +282,7 @@ document.getElementById('runPdf').addEventListener('click', () => {
       processed++;
       if (processed === files.length) {
         pdf.save(files.length > 1 ? 'images.pdf' : `${stripExt(files[0].file.name)}.pdf`);
+        alert('Successfully downloaded');
       }
     };
     img.src = item.dataURL;

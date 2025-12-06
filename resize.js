@@ -1,22 +1,27 @@
-function resizeImg() {
-    let file = document.getElementById("resizeInput").files[0];
-    let w = document.getElementById("resizeW").value;
-    let h = document.getElementById("resizeH").value;
+async function resizeImage() {
+  const input = document.getElementById("fileInput");
+  const size = parseFloat(document.getElementById("sizeInput").value);
+  const unit = document.getElementById("unitSelect").value;
 
-    let img = new Image();
-    img.onload = function () {
-        let canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
+  if (!input.files.length) {
+    alert("Please select an image first!");
+    return;
+  }
 
-        let ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, w, h);
+  if (!size) {
+    alert("Please enter target size!");
+    return;
+  }
 
-        let link = document.getElementById("resizeDownload");
-        link.href = canvas.toDataURL("image/jpeg");
-        link.download = "resized.jpg";
-        link.style.display = "inline";
-        link.innerText = "Download Resized Image";
-    };
-    img.src = URL.createObjectURL(file);
+  const file = input.files[0];
+  const finalKB = unit === "MB" ? size * 1024 : size;
+
+  const output = await compressToTargetSize(file, finalKB);
+
+  const url = URL.createObjectURL(output);
+  document.getElementById("outputImage").src = url;
+
+  const downloadLink = document.getElementById("downloadBtn");
+  downloadLink.href = url;
+  downloadLink.download = "compressed.jpg";
 }

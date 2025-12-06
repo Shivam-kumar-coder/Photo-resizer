@@ -1,172 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>No.1 Photo Resizer</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QuickPic — Resize • Compress • Convert • Image→PDF</title>
+  <meta name="description" content="QuickPic Tools - Resize images to KB/MB or px, compress, convert and export to PDF. Multi-image support. Runs in browser (no upload)." />
+  <link rel="stylesheet" href="style.css">
 
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        background:#f5f7ff;
-        text-align:center;
-        margin:0;
-        padding:0;
-    }
-
-    h1 {
-        margin-top:40px;
-        color:#2e5bff;
-        font-size:28px;
-        font-weight:800;
-    }
-
-    /* Header Menu */
-    .menu {
-        width:90%;
-        margin:20px auto;
-        padding:15px;
-        border:3px solid #2e5bff;
-        border-radius:12px;
-        display:flex;
-        justify-content:space-around;
-        font-size:18px;
-        font-weight:600;
-        color:#2e5bff;
-    }
-
-    .menu div {
-        cursor:pointer;
-        padding:5px 10px;
-        transition:0.3s;
-    }
-
-    .menu div:hover {
-        background:#2e5bff;
-        color:white;
-        border-radius:6px;
-    }
-
-    /* Select Box Area */
-    .select-box-area {
-        width:90%;
-        margin:30px auto;
-        padding:40px 0;
-        border:3px solid #2e5bff;
-        border-radius:12px;
-        display:block;
-    }
-
-    .select-btn {
-        width:250px;
-        margin:auto;
-        padding:18px;
-        border:3px solid #2e5bff;
-        font-size:22px;
-        border-radius:12px;
-        cursor:pointer;
-        color:#2e5bff;
-        background:white;
-        transition:0.3s;
-    }
-
-    .select-btn:hover {
-        background:#2e5bff;
-        color:white;
-    }
-
-    /* Tools Hidden Initially */
-    .tool-box {
-        width:90%;
-        margin:30px auto;
-        padding:30px;
-        border:3px solid #2e5bff;
-        border-radius:12px;
-        display:none;
-    }
-
-    /* Bottom boxes */
-    .bottom-section {
-        display:flex;
-        justify-content:center;
-        gap:20px;
-        margin-top:40px;
-        flex-wrap:wrap;
-    }
-
-    .bottom-card {
-        width:200px;
-        height:120px;
-        padding:30px;
-        border:3px solid #2e5bff;
-        border-radius:12px;
-        font-size:20px;
-        font-weight:600;
-        color:#2e5bff;
-    }
-</style>
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-
 <body>
+  <header class="site-header">
+    <div class="container header-row">
+      <div class="brand">QuickPic</div>
+      <nav class="nav">
+        <button class="nav-btn active" data-target="tool-kb">KB / MB</button>
+        <button class="nav-btn" data-target="tool-px">W×H</button>
+        <button class="nav-btn" data-target="tool-compress">Compress</button>
+        <button class="nav-btn" data-target="tool-convert">Convert</button>
+        <button class="nav-btn" data-target="tool-pdf">Image → PDF</button>
+      </nav>
+    </div>
+  </header>
 
-<h1>No.1 Photo Resizer</h1>
+  <main class="container">
+    <section class="hero">
+      <h1>Resize an Image</h1>
+      <p class="lead">Drop your images here or browse. Select a tool above. Everything runs in your browser — files are not uploaded.</p>
+    </section>
 
-<!-- MENU -->
-<div class="menu">
-    <div onclick="openTool('kb')">KB / MB</div>
-    <div onclick="openTool('pdf')">Convert PDF</div>
-    <div onclick="openTool('size')">HW / WH</div>
-    <div onclick="openTool('compress')">Compress</div>
-</div>
+    <!-- Drop / Select area -->
+    <section id="select-area" class="card dropcard">
+      <div id="dropbox" class="dropbox">
+        <div class="drop-ico">⬆</div>
+        <div class="drop-text">Drop your images here or <span class="link" id="browseText">browse</span>.</div>
+        <button id="selectBtn" class="btn primary">Select Images</button>
+        <input id="fileInput" type="file" accept="image/*" multiple hidden>
+      </div>
+    </section>
 
-<!-- SELECT BOX AREA -->
-<div id="selectArea" class="select-box-area">
-    <div class="select-btn">Select Box</div>
-</div>
+    <!-- Thumbnails -->
+    <section id="thumbs" class="card thumbs hidden">
+      <div id="thumbGrid" class="thumb-grid"></div>
+    </section>
 
-<!-- TOOL SECTIONS -->
+    <!-- Tools area (only one visible at a time) -->
+    <section class="tools">
 
-<div id="kb" class="tool-box">
-    <h2>Resize to KB / MB</h2>
-    <input type="file"> <br><br>
-    <input type="number" placeholder="Size KB">
-</div>
+      <!-- Resize KB -->
+      <div id="tool-kb" class="card tool-panel visible">
+        <h2>Resize to target size (KB/MB)</h2>
+        <div class="row">
+          <input id="targetSize" type="number" placeholder="Enter target number (eg. 100)">
+          <select id="sizeUnit"><option value="kb">KB</option><option value="mb">MB</option></select>
+          <button id="startKb" class="btn">Process</button>
+        </div>
+        <p class="hint">Tool will try quality reduction and downscale progressively to reach the target size. Best for JPEG/photo inputs.</p>
+      </div>
 
-<div id="pdf" class="tool-box">
-    <h2>Convert Image to PDF</h2>
-    <input type="file"> <br><br>
-    <button>Convert</button>
-</div>
+      <!-- Resize PX -->
+      <div id="tool-px" class="card tool-panel">
+        <h2>Resize by Width × Height (px)</h2>
+        <div class="row">
+          <input id="widthPx" type="number" placeholder="Width (px)">
+          <input id="heightPx" type="number" placeholder="Height (px)">
+        </div>
+        <div class="row">
+          <label><input id="keepAspect" type="checkbox" checked> Maintain aspect ratio</label>
+          <button id="startPx" class="btn">Resize & Download</button>
+        </div>
+      </div>
 
-<div id="size" class="tool-box">
-    <h2>Resize Height / Width</h2>
-    <input type="file"> <br><br>
-    <input type="number" placeholder="Width">
-    <input type="number" placeholder="Height">
-</div>
+      <!-- Compress -->
+      <div id="tool-compress" class="card tool-panel">
+        <h2>Compress (quality slider)</h2>
+        <div class="row center">
+          <label class="muted">Quality: <span id="qualityVal">70</span>%</label>
+          <input id="qualityRange" type="range" min="10" max="95" value="70">
+        </div>
+        <div class="row">
+          <button id="startCompress" class="btn">Compress & Download</button>
+        </div>
+        <p class="hint">Lower quality → smaller file. Use for faster results.</p>
+      </div>
 
-<div id="compress" class="tool-box">
-    <h2>Compress Image</h2>
-    <input type="file"> <br><br>
-    <input type="range">
-</div>
+      <!-- Convert -->
+      <div id="tool-convert" class="card tool-panel">
+        <h2>Convert Images</h2>
+        <div class="row">
+          <select id="convertFormat">
+            <option value="image/jpeg">Convert → JPG</option>
+            <option value="image/png">Convert → PNG</option>
+            <option value="image/webp">Convert → WebP</option>
+          </select>
+          <button id="startConvert" class="btn">Convert & Download</button>
+        </div>
+      </div>
 
-<!-- BOTTOM CONTENT -->
-<div class="bottom-section">
-    <div class="bottom-card">Content etc</div>
-    <div class="bottom-card">Content etc</div>
-</div>
+      <!-- Image -> PDF -->
+      <div id="tool-pdf" class="card tool-panel">
+        <h2>Image → PDF</h2>
+        <div class="row">
+          <label class="muted">Each selected image becomes one page in the PDF.</label>
+        </div>
+        <div class="row">
+          <button id="startPdf" class="btn">Export PDF</button>
+        </div>
+      </div>
 
-<script>
-function openTool(toolId) {
-    document.getElementById("selectArea").style.display = "none";
+    </section>
 
-    let tools = document.getElementsByClassName("tool-box");
-    for (let t of tools) t.style.display = "none";
+    <!-- Bottom content boxes -->
+    <section class="bottom-cards">
+      <div class="bottom-card">Content etc</div>
+      <div class="bottom-card">Content etc</div>
+    </section>
+  </main>
 
-    document.getElementById(toolId).style.display = "block";
-}
-</script>
+  <footer class="footer">
+    © QuickPic — Fast image tools. Privacy: images processed in your browser.
+  </footer>
 
+  <script src="script.js"></script>
 </body>
 </html>

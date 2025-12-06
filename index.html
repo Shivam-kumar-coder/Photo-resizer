@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>QuickPic — Resize • Compress • Convert • Image→PDF</title>
+  <meta name="description" content="QuickPic — Resize images to KB/MB or px, compress, convert and export to PDF. Client-side, fast." />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-
   <header class="site-header">
     <div class="header-inner">
       <div class="brand">QuickPic</div>
@@ -16,18 +16,13 @@
         <button class="nav-btn active" data-tool="tool-kb">KB / MB</button>
         <button class="nav-btn" data-tool="tool-pdf">Image → PDF</button>
         <button class="nav-btn" data-tool="tool-px">Width × Height</button>
-        <button class="nav-btn" data-tool="tool-convert">Convert</button>
+        <button class="nav-btn" data-tool="tool-convert">Convert to JPG/PNG</button>
         <button class="nav-btn" data-tool="tool-compress">Compress</button>
       </nav>
     </div>
   </header>
 
   <main class="main-container">
-
-    <!-- Success Message -->
-    <div id="successMsg" class="success-box hidden">
-      ✅ Download Successful
-    </div>
 
     <!-- Upload Area -->
     <section id="select-area" class="card drop-card">
@@ -50,60 +45,65 @@
       </div>
     </section>
 
-    <!-- Tools -->
+    <!-- Tools Section -->
     <section class="tools">
 
       <div id="tool-kb" class="tool-panel card visible">
         <h2>Resize to Target Size (KB / MB)</h2>
         <div class="row">
-          <input id="targetSize" type="number" placeholder="Enter size" min="1" />
+          <input id="targetSize" type="number" placeholder="Enter size (e.g. 100)" min="1" />
           <select id="sizeUnit"><option value="kb">KB</option><option value="mb">MB</option></select>
           <button id="runKb" class="btn">Start</button>
         </div>
+        <p class="hint">Reduces quality & scales down to approx. target size (±10 KB tolerance).</p>
       </div>
 
       <div id="tool-pdf" class="tool-panel card">
         <h2>Export Selected Images as PDF</h2>
-        <button id="runPdf" class="btn">Export PDF</button>
+        <div class="row">
+          <label class="muted">Each image becomes one PDF page (A4, centered).</label>
+          <button id="runPdf" class="btn">Export PDF</button>
+        </div>
       </div>
 
       <div id="tool-px" class="tool-panel card">
-        <h2>Resize by Width × Height</h2>
+        <h2>Resize by Width × Height (px)</h2>
         <div class="row">
-          <input id="widthPx" type="number" placeholder="Width" min="1" />
-          <input id="heightPx" type="number" placeholder="Height" min="1" />
+          <input id="widthPx" type="number" placeholder="Width (px)" min="1" />
+          <input id="heightPx" type="number" placeholder="Height (px)" min="1" />
         </div>
         <div class="row">
-          <label><input id="keepAspect" type="checkbox" checked /> Maintain aspect ratio</label>
+          <label class="muted"><input id="keepAspect" type="checkbox" checked /> Maintain aspect ratio</label>
           <button id="runPx" class="btn">Resize & Download</button>
         </div>
       </div>
 
       <div id="tool-convert" class="tool-panel card">
-        <h2>Convert Format</h2>
+        <h2>Convert to JPG/PNG</h2>
         <div class="row">
           <select id="convertFormat">
             <option value="image/jpeg">Convert → JPG</option>
             <option value="image/png">Convert → PNG</option>
-            <option value="image/webp">Convert → WebP</option>
           </select>
           <button id="runConvert" class="btn">Convert & Download</button>
         </div>
       </div>
 
       <div id="tool-compress" class="tool-panel card">
-        <h2>Compress Image</h2>
+        <h2>Compress Image (Quality)</h2>
         <div class="row">
           <label>Quality: <span id="qualityVal">70</span>%</label>
           <input id="qualitySlider" type="range" min="10" max="95" value="70" />
         </div>
-        <button id="runCompress" class="btn">Compress & Download</button>
+        <div class="row">
+          <button id="runCompress" class="btn">Compress & Download</button>
+        </div>
       </div>
 
     </section>
   </main>
 
-  <footer class="site-footer">© QuickPic — Files processed locally.</footer>
+  <footer class="site-footer">© QuickPic — Privacy first. Files processed in your browser.</footer>
 
   <script src="script.js"></script>
 </body>

@@ -1,125 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>QuickPic — Resize • Compress • Convert • Image→PDF</title>
-  <meta name="description" content="QuickPic Tools - Resize images to KB/MB or px, compress, convert and export to PDF. Multi-image support. Runs in browser (no upload)." />
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickPic Tools — Resize · Compress · Convert · Image→PDF</title>
+  <meta name="description" content="QuickPic Tools: Resize images to KB/MB or px, compress, convert JPG/PNG/WebP and export to PDF. Works in browser, no upload." />
+  <link rel="stylesheet" href="style.css" />
 
-  <!-- jsPDF for PDF export -->
+  <!-- jsPDF library for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
+
   <header class="site-header">
-    <div class="container header-row">
-      <div class="brand">QuickPic</div>
+    <div class="header-inner">
+      <div class="brand">QuickPic Tools</div>
       <nav class="nav">
-        <button class="nav-btn active" data-target="tool-kb">KB / MB</button>
-        <button class="nav-btn" data-target="tool-px">W×H</button>
-        <button class="nav-btn" data-target="tool-compress">Compress</button>
-        <button class="nav-btn" data-target="tool-convert">Convert</button>
-        <button class="nav-btn" data-target="tool-pdf">Image → PDF</button>
+        <button class="nav-btn active" data-tool="tool-kb">KB/MB</button>
+        <button class="nav-btn" data-tool="tool-px">W×H</button>
+        <button class="nav-btn" data-tool="tool-compress">Compress</button>
+        <button class="nav-btn" data-tool="tool-convert">Convert</button>
+        <button class="nav-btn" data-tool="tool-pdf">Image→PDF</button>
       </nav>
     </div>
   </header>
 
-  <main class="container">
-    <section class="hero">
-      <h1>Resize an Image</h1>
-      <p class="lead">Drop your images here or browse. Select a tool above. Everything runs in your browser — files are not uploaded.</p>
-    </section>
+  <main class="main-container">
 
-    <!-- Drop / Select area -->
-    <section id="select-area" class="card dropcard">
+    <!-- File select / drop area -->
+    <section id="select-area" class="card drop-card">
       <div id="dropbox" class="dropbox">
-        <div class="drop-ico">⬆</div>
-        <div class="drop-text">Drop your images here or <span class="link" id="browseText">browse</span>.</div>
+        <div class="drop-icon">⬆</div>
+        <div class="drop-text">Drop images here or <span id="browseText" class="link">browse</span></div>
         <button id="selectBtn" class="btn primary">Select Images</button>
         <input id="fileInput" type="file" accept="image/*" multiple hidden>
       </div>
     </section>
 
-    <!-- Thumbnails -->
-    <section id="thumbs" class="card thumbs hidden">
-      <div id="thumbGrid" class="thumb-grid"></div>
+    <!-- Thumbnail previews -->
+    <section id="thumbs-area" class="card thumbs hidden">
+      <div id="thumb-grid" class="thumb-grid"></div>
+      <button id="resetBtn" class="btn secondary">Upload New Images</button>
     </section>
 
-    <!-- Tools area (only one visible at a time) -->
+    <!-- Tool panels -->
     <section class="tools">
 
-      <!-- Resize KB -->
-      <div id="tool-kb" class="card tool-panel visible">
-        <h2>Resize to target size (KB/MB)</h2>
+      <!-- Resize to target size (KB/MB) -->
+      <div id="tool-kb" class="tool-panel visible card">
+        <h2>Resize to Target Size (KB / MB)</h2>
         <div class="row">
-          <input id="targetSize" type="number" placeholder="Enter target number (eg. 100)">
-          <select id="sizeUnit"><option value="kb">KB</option><option value="mb">MB</option></select>
-          <button id="startKb" class="btn">Process</button>
+          <input id="targetSize" type="number" placeholder="Enter size (e.g. 100)" />
+          <select id="sizeUnit">
+            <option value="kb">KB</option>
+            <option value="mb">MB</option>
+          </select>
+          <button id="runKb" class="btn">Start</button>
         </div>
-        <p class="hint">Tool will try quality reduction and downscale progressively to reach the target size. Best for JPEG/photo inputs.</p>
+        <p class="hint">Tool reduces quality &/or scale to meet target size. Best for photos (JPEG).</p>
       </div>
 
-      <!-- Resize PX -->
-      <div id="tool-px" class="card tool-panel">
+      <!-- Resize by width × height -->
+      <div id="tool-px" class="tool-panel card">
         <h2>Resize by Width × Height (px)</h2>
         <div class="row">
-          <input id="widthPx" type="number" placeholder="Width (px)">
-          <input id="heightPx" type="number" placeholder="Height (px)">
+          <input id="widthPx" type="number" placeholder="Width (px)" />
+          <input id="heightPx" type="number" placeholder="Height (px)" />
         </div>
         <div class="row">
-          <label><input id="keepAspect" type="checkbox" checked> Maintain aspect ratio</label>
-          <button id="startPx" class="btn">Resize & Download</button>
+          <label><input id="keepAspect" type="checkbox" checked /> Maintain aspect ratio</label>
+          <button id="runPx" class="btn">Resize & Download</button>
         </div>
       </div>
 
-      <!-- Compress -->
-      <div id="tool-compress" class="card tool-panel">
-        <h2>Compress (quality slider)</h2>
-        <div class="row center">
-          <label class="muted">Quality: <span id="qualityVal">70</span>%</label>
-          <input id="qualityRange" type="range" min="10" max="95" value="70">
-        </div>
+      <!-- Compress image quality -->
+      <div id="tool-compress" class="tool-panel card">
+        <h2>Compress Image (Quality)</h2>
         <div class="row">
-          <button id="startCompress" class="btn">Compress & Download</button>
+          <label>Quality: <span id="qualityVal">70</span>%</label>
+          <input id="qualitySlider" type="range" min="10" max="95" value="70" />
         </div>
-        <p class="hint">Lower quality → smaller file. Use for faster results.</p>
+        <button id="runCompress" class="btn">Compress & Download</button>
       </div>
 
-      <!-- Convert -->
-      <div id="tool-convert" class="card tool-panel">
-        <h2>Convert Images</h2>
+      <!-- Convert image format -->
+      <div id="tool-convert" class="tool-panel card">
+        <h2>Convert Image Format</h2>
         <div class="row">
           <select id="convertFormat">
             <option value="image/jpeg">Convert → JPG</option>
             <option value="image/png">Convert → PNG</option>
             <option value="image/webp">Convert → WebP</option>
           </select>
-          <button id="startConvert" class="btn">Convert & Download</button>
+          <button id="runConvert" class="btn">Convert & Download</button>
         </div>
       </div>
 
-      <!-- Image -> PDF -->
-      <div id="tool-pdf" class="card tool-panel">
-        <h2>Image → PDF</h2>
-        <div class="row">
-          <label class="muted">Each selected image becomes one page in the PDF.</label>
-        </div>
-        <div class="row">
-          <button id="startPdf" class="btn">Export PDF</button>
-        </div>
+      <!-- Image → PDF -->
+      <div id="tool-pdf" class="tool-panel card">
+        <h2>Export Selected Images as PDF</h2>
+        <button id="runPdf" class="btn">Export PDF</button>
       </div>
 
     </section>
 
-    <!-- Bottom content boxes -->
-    <section class="bottom-cards">
-      <div class="bottom-card">Content etc</div>
-      <div class="bottom-card">Content etc</div>
-    </section>
   </main>
 
-  <footer class="footer">
-    © QuickPic — Fast image tools. Privacy: images processed in your browser.
+  <footer class="site-footer">
+    © QuickPic Tools — Privacy First, No Uploads.
   </footer>
 
   <script src="script.js"></script>

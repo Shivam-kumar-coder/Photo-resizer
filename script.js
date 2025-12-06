@@ -1,4 +1,4 @@
-// QuickPic - 100% Working Final Version with All Tools Fixed
+// QuickPic - Fixed Version with Tolerance in KB/MB & Correct Extensions
 const fileInput = document.getElementById('fileInput');
 const selectBtn = document.getElementById('selectBtn');
 const dropbox = document.getElementById('dropbox');
@@ -107,9 +107,10 @@ function stripExt(name) {
   return name.replace(/\.[^/.]+$/, '');
 }
 
-// KB/MB Resize Tool - Fixed
+// KB/MB Resize Tool - Fixed with ±10 KB Tolerance
 async function compressToTargetSize(file, targetKB) {
   const targetBytes = targetKB * 1024;
+  const toleranceBytes = 10 * 1024; // ±10 KB
   const read = f => new Promise(res => {
     const r = new FileReader();
     r.onload = e => res(e.target.result);
@@ -125,11 +126,11 @@ async function compressToTargetSize(file, targetKB) {
   canvas.width = img.naturalWidth;
   canvas.height = img.naturalHeight;
 
-  let quality = 0.92;
-  let scale = 1;
+  let quality = 0.95;
+  let scale = 1.0;
   let resultBlob = null;
 
-  for (let iter = 0; iter < 18; iter++) {
+  for (let iter = 0; iter < 25; iter++) { // Increased iterations for better approximation
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const w = Math.max(1, Math.round(img.naturalWidth * scale));
     const h = Math.max(1, Math.round(img.naturalHeight * scale));
@@ -139,16 +140,24 @@ async function compressToTargetSize(file, targetKB) {
     ctx.drawImage(img, 0, 0, w, h);
     const data = canvas.toDataURL('image/jpeg', quality);
     const blob = dataURLtoBlob(data);
-    if (blob.size <= targetBytes || (quality <= 0.12 && scale <= 0.34)) {
+    const sizeDiff = blob.size - targetBytes;
+    if (Math.abs(sizeDiff) <= toleranceBytes || (quality <= 0.10 && scale <= 0.30)) {
       resultBlob = blob;
       break;
     }
-    if (quality > 0.25) quality -= 0.08;
-    else scale -= 0.08;
+    // Adjust more finely
+    if (sizeDiff > 0) {
+      if (quality > 0.20) quality -= 0.05;
+      else scale -= 0.05;
+    } else {
+      // If under, slightly increase quality or scale to get closer
+      if (quality < 0.95) quality += 0.02;
+      else scale += 0.02;
+    }
   }
 
   if (!resultBlob) {
-    const data = canvas.toDataURL('image/jpeg', Math.max(0.12, quality));
+    const data = canvas.toDataURL('image/jpeg', quality);
     resultBlob = dataURLtoBlob(data);
   }
   return resultBlob;
@@ -172,7 +181,7 @@ document.getElementById('runKb').addEventListener('click', async () => {
   alert('Processing finished.');
 });
 
-// PX Resize Tool - Fixed
+// PX Resize Tool
 document.getElementById('runPx').addEventListener('click', () => {
   if (!files.length) return alert('Upload image(s) first.');
   const w = Number(widthPxEl.value);
@@ -197,7 +206,7 @@ document.getElementById('runPx').addEventListener('click', () => {
   });
 });
 
-// Compress Tool - Fixed
+// Compress Tool
 qualitySlider.addEventListener('input', () => qualityVal.textContent = qualitySlider.value);
 document.getElementById('runCompress').addEventListener('click', () => {
   if (!files.length) return alert('Upload image(s) first.');
@@ -214,24 +223,29 @@ document.getElementById('runCompress').addEventListener('click', () => {
   });
 });
 
-// Convert Tool - Fixed
+// Convert Tool - Fixed Extensions
 document.getElementById('runConvert').addEventListener('click', () => {
   if (!files.length) return alert('Upload image(s) first.');
   const fmt = convertFormat.value;
+  const extMap = {
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/webp': '.webp'
+  };
+  const ext = extMap[fmt] || '.jpg'; // Fallback to jpg
   files.forEach(item => {
     const img = new Image();
     img.onload = () => {
       const c = document.createElement('canvas');
       c.width = img.naturalWidth; c.height = img.naturalHeight;
       c.getContext('2d').drawImage(img, 0, 0);
-      const ext = fmt === 'image/png' ? '.png' : fmt === 'image/webp' ? '.webp' : '.jpg';
-      c.toBlob(blob => downloadBlob(blob, `\( {stripExt(item.file.name)} \){ext}`), fmt);
+      c.toBlob(blob => downloadBlob(blob, `\( {stripExt(item.file.name)} \){ext}`), fmt, 0.92); // Added quality for non-lossless
     };
     img.src = item.dataURL;
   });
 });
 
-// PDF Tool - Fixed
+// PDF Tool
 document.getElementById('runPdf').addEventListener('click', () => {
   if (!files.length) return alert('Upload image(s) first.');
   const { jsPDF } = window.jspdf;

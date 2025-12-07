@@ -136,10 +136,11 @@ function resetAll() {
 }
 
 
-// ===================== 1. KB REDUCER LOGIC =====================
+// ===================== 1. KB REDUCER LOGIC (FIXED) =====================
 async function compressToTargetSize(file, targetKB) {
     const targetBytes = targetKB * 1024;
-    const dataURL = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
+    // We use the already loaded dataURL from the file object
+    const dataURL = files.find(f => f.file === file).dataURL;
     const img = await loadImage(dataURL);
 
     let canvas = document.createElement('canvas');
@@ -150,25 +151,34 @@ async function compressToTargetSize(file, targetKB) {
     let quality = 0.92;
     let scale = 1;
 
-    for (let iter = 0; iter < 18; iter++) {
-        const w = Math.max(1, Math.round(img.naturalWidth * scale));
-        const h = Math.max(1, Math.round(img.naturalHeight * scale));
+    for (let iter = 0; iter < 20; iter++) { // Increased iterations for stability
+        // Calculate new dimensions based on scale
+        const w = Math.max(10, Math.round(img.naturalWidth * scale));
+        const h = Math.max(10, Math.round(img.naturalHeight * scale));
+        
+        // Ensure canvas size is not zero
+        if (w < 10 || h < 10) break;
+        
         canvas.width = w; canvas.height = h;
         ctx.drawImage(img, 0, 0, w, h);
         
+        // Convert to data URL and then to Blob for size check
         const data = canvas.toDataURL('image/jpeg', quality);
         const blob = dataURLtoBlob(data);
 
-        if (blob.size <= targetBytes + 5 * 1024) return blob; 
+        // Check size: If reached or below target
+        if (blob.size <= targetBytes) return blob; 
 
-        if (quality > 0.3) quality -= 0.08;
-        else scale -= 0.08;
+        // Adjust parameters: first drop quality, then scale
+        if (quality > 0.3) quality -= 0.1; // Aggressively reduce quality first
+        else scale -= 0.1; // Then reduce scale
 
-        if (quality < 0.1 || scale < 0.1) break; 
+        if (quality < 0.1 && scale < 0.2) break; // Safety break
     }
     
-    const finalData = canvas.toDataURL('image/jpeg', 0.1);
-    return dataURLtoBlob(finalData);
+    // Fallback: Return the smallest possible result (low quality, small scale)
+    const fallbackBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.1));
+    return fallbackBlob;
 }
 
 document.getElementById('runKb').addEventListener('click', async () => {
@@ -181,15 +191,17 @@ document.getElementById('runKb').addEventListener('click', async () => {
 
     for (const item of files) {
         try {
-            const out = await compressToTargetSize(item.file, targetKB);
+            // PASSING item.file (original file object)
+            const out = await compressToTargetSize(item.file, targetKB); 
             downloadBlob(out, `${stripExt(item.file.name)}-to-${targetKB}KB.jpg`);
             processedCount++;
         } catch (err) {
-            console.error(err);
+            console.error(`Error processing ${item.file.name}:`, err);
+            // Don't interrupt others, just log the error
         }
     }
     if (processedCount > 0) showSuccess(`Successfully reduced ${processedCount} image(s) to ${targetKB} KB!`);
-    else showError('Error processing images. Try a higher target size.');
+    else showError('Error processing images. Check console for details or try a higher target size.');
 });
 
 
@@ -222,6 +234,7 @@ document.getElementById('runPx').addEventListener('click', async () => {
     }
     if (processedCount > 0) showSuccess(`Successfully resized ${processedCount} image(s)!`);
 });
+
 
 // ===================== 3. COMPRESS TOOL (Multi-Image Fixed) =====================
 qualitySlider.addEventListener('input', () => qualityVal.textContent = qualitySlider.value);

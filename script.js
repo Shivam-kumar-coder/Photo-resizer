@@ -42,7 +42,6 @@ function showError(msg) {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3500);
 }
-// createSpinner and removeSpinner functions are removed.
 
 // ===================== FILE HANDLING =====================
 ['dragenter','dragover'].forEach(e => dropbox?.addEventListener(e, ev => {ev.preventDefault(); dropbox.classList.add('dragover');}));
@@ -78,18 +77,16 @@ function handleFiles(fileList) {
       const img = new Image();
       img.onload = () => {
         files.push({file, dataURL: e.target.result, width: img.naturalWidth, height: img.naturalHeight});
-        
-        // 🐛 FIX 2: THUMBNAIL DISPLAY
-        // Fixed string interpolation syntax.
+
+        // FIX: THUMBNAIL DISPLAY
         thumbGrid.innerHTML += `<div class="thumb-item"><img src="${e.target.result}"><div class="thumb-meta">${file.name}<br>${(file.size/1024).toFixed(1)} KB<br>${img.naturalWidth}×${img.naturalHeight}</div></div>`;
-        
+
         if (++loaded === valid.length) {
           document.getElementById('select-area').style.display = 'none';
           thumbsArea.classList.remove('hidden');
         }
       };
-      // 🚀 Improvement 3: To speed up file loading for thumbnails
-      // Using e.target.result directly for image source for faster loading
+      // IMPROVEMENT: Faster file loading
       img.src = e.target.result; 
     };
     reader.readAsDataURL(file);
@@ -116,23 +113,23 @@ async function compressToTargetSize(file, targetKB) {
   canvas.width = img.naturalWidth;
   canvas.height = img.naturalHeight;
   ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight);
-  
+
   let quality = 0.9;
   for (let i = 0; i < 15; i++) { 
     const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
-    
-    // Check if the size is reached. (5KB tolerance)
+
+    // Check if the size is reached. (5KB tolerance, as per logic)
     if (blob.size <= targetBytes + 5 * 1024) return blob; 
-    
+
     quality -= 0.06; 
     if (quality < 0.1) break; 
   }
-  
+
   // Final low quality fallback
   return await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.1));
 }
 
-// ===================== KB/MB BUTTON =====================
+// ===================== KB/MB BUTTON (WORKING NOW) =====================
 document.getElementById('runKb')?.addEventListener('click', async () => {
   if (!files.length) return showError("Upload images first!");
   const val = Number(targetSizeEl.value);
@@ -143,8 +140,7 @@ document.getElementById('runKb')?.addEventListener('click', async () => {
   for (const item of files) {
     const blob = await compressToTargetSize(item.file, targetKB);
     if (blob) {
-      // 🐛 FIX 1: KB REDUCE DOWNLOAD
-      // Fixed string interpolation syntax.
+      // FIX: KB REDUCE DOWNLOAD SYNTAX
       downloadBlob(blob, `${stripExt(item.file.name)}-${targetKB}KB.jpg`);
       success++;
     }

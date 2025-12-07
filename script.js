@@ -19,7 +19,7 @@ const passportBtn = document.getElementById('passportBtn');
 
 let files = [];
 
-// ===================== TOAST + SPINNER =====================
+// ===================== TOAST (SPINNER REMOVED) =====================
 function showSuccess(msg) {
   const t = document.createElement('div');
   t.textContent = msg;
@@ -42,24 +42,9 @@ function showError(msg) {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3500);
 }
-function createSpinner(msg) {
-  removeSpinner();
-  const s = document.createElement('div');
-  s.id = 'spinner-box';
-  s.innerHTML = `<div style="border:6px solid #f0f0f0; border-top:6px solid #16a34a; border-radius:50%; width:50px; height:50px; animation:spin 1s linear infinite; margin:0 auto 12px;"></div><div style="font-weight:600; color:#333;">${msg}</div>`;
-  Object.assign(s.style, {
-    position:'fixed', top:'50%', left:'50%', transform:'translate(-50%,-50%)',
-    background:'#fff', padding:'30px 40px', borderRadius:'16px', textAlign:'center',
-    boxShadow:'0 10px 30px rgba(0,0,0,0.2)', zIndex:99999, fontSize:'18px'
-  });
-  document.body.appendChild(s);
-}
-function removeSpinner() { document.getElementById('spinner-box')?.remove(); }
+// createSpinner and removeSpinner functions are removed.
 
-// Spinner CSS
-const style = document.createElement('style');
-style.textContent = `@keyframes spin {0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}`;
-document.head.appendChild(style);
+// Spinner CSS is removed.
 
 // ===================== FILE HANDLING =====================
 ['dragenter','dragover'].forEach(e => dropbox?.addEventListener(e, ev => {ev.preventDefault(); dropbox.classList.add('dragover');}));
@@ -95,7 +80,8 @@ function handleFiles(fileList) {
       const img = new Image();
       img.onload = () => {
         files.push({file, dataURL: e.target.result, width: img.naturalWidth, height: img.naturalHeight});
-        thumbGrid.innerHTML += `<div class="thumb-item"><img src="\( {e.target.result}"><div class="thumb-meta"> \){file.name}<br>\( {(file.size/1024).toFixed(1)} KB<br> \){img.naturalWidth}×${img.naturalHeight}</div></div>`;
+        // Added backslashes for string interpolation to prevent error in code blocks
+        thumbGrid.innerHTML += `<div class="thumb-item"><img src="\({e.target.result}"><div class="thumb-meta"> \){file.name}<br>\({(file.size/1024).toFixed(1)} KB<br> \){img.naturalWidth}×${img.naturalHeight}</div></div>`;
         if (++loaded === valid.length) {
           document.getElementById('select-area').style.display = 'none';
           thumbsArea.classList.remove('hidden');
@@ -115,7 +101,7 @@ function downloadBlob(blob, name) {
 }
 function stripExt(name) { return name.replace(/\.[^/.]+$/, ""); }
 
-// ===================== SUPER FAST & ACCURATE KB/MB REDUCER =====================
+// ===================== EASY KB REDUCER (ONLY QUALITY) =====================
 async function compressToTargetSize(file, targetKB) {
   const targetBytes = targetKB * 1024;
   const url = await new Promise(r => { const fr = new FileReader(); fr.onload = e => r(e.target.result); fr.readAsDataURL(file); });
@@ -124,34 +110,23 @@ async function compressToTargetSize(file, targetKB) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
 
-  let width = img.naturalWidth;
-  let height = img.naturalHeight;
-  let quality = 0.92;
-
-  canvas.width = width;
-  canvas.height = height;
-
-  for (let i = 0; i < 20; i++) {
-    ctx.clearRect(0, 0, width, height);
-    ctx.drawImage(img, 0, 0, width, height);
-
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight);
+  
+  // Start with high quality and decrease until target size is met or minimum quality is reached
+  let quality = 0.9;
+  for (let i = 0; i < 15; i++) { // Max 15 attempts to prevent infinite loop
     const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
     
-    if (blob.size <= targetBytes + 5*1024) return blob; // Within ±5KB
-
-    if (quality > 0.3) {
-      quality -= 0.07;
-    } else {
-      width = Math.round(width * 0.9);
-      height = Math.round(height * 0.9);
-      canvas.width = width;
-      canvas.height = height;
-    }
+    if (blob.size <= targetBytes + 5 * 1024) return blob; // Within ±5KB
+    
+    quality -= 0.06; // Decrease quality by a fixed amount
+    if (quality < 0.1) break; // Stop if quality gets too low
   }
-
-  // Final low quality
-  ctx.drawImage(img, 0, 0, width, height);
-  return await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.3));
+  
+  // If still not met, return the lowest quality attempt
+  return await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.1));
 }
 
 // ===================== KB/MB BUTTON =====================
@@ -161,18 +136,19 @@ document.getElementById('runKb')?.addEventListener('click', async () => {
   if (!val || val <= 0) return showError("Enter valid size!");
   const targetKB = sizeUnitEl.value === 'mb' ? val * 1024 : val;
 
-  createSpinner(`Reducing to ${targetKB < 1024 ? targetKB+' KB' : val+' MB'}...`);
-
+  // Spinner logic removed
+  
   let success = 0;
   for (const item of files) {
     const blob = await compressToTargetSize(item.file, targetKB);
     if (blob) {
-      downloadBlob(blob, `\( {stripExt(item.file.name)}- \){targetKB}KB.jpg`);
+      // Added backslashes for string interpolation to prevent error in code blocks
+      downloadBlob(blob, `\({stripExt(item.file.name)}- \){targetKB}KB.jpg`);
       success++;
     }
   }
 
-  removeSpinner();
+  // Spinner logic removed
   success ? showSuccess(`Done! ${success} images reduced`) : showError("Try higher size");
 });
 
@@ -186,7 +162,8 @@ document.getElementById('runPx')?.addEventListener('click', () => {
     else if (h && !w) tw = Math.round(img.naturalWidth * (h/img.naturalHeight)); }
     const c = document.createElement('canvas'); c.width = tw; c.height = th;
     c.getContext('2d').drawImage(img, 0, 0, tw, th);
-    c.toBlob(b => b && downloadBlob(b, `\( {stripExt(item.file.name)}- \){tw}x${th}.jpg`), 'image/jpeg', 0.92);
+    // Added backslashes for string interpolation to prevent error in code blocks
+    c.toBlob(b => b && downloadBlob(b, `\({stripExt(item.file.name)}- \){tw}x${th}.jpg`), 'image/jpeg', 0.92);
     if (++s === files.length) showSuccess("Resized!");
   };});
 });
@@ -207,7 +184,8 @@ document.getElementById('runConvert')?.addEventListener('click', () => {
   files.forEach(item => { const img = new Image(); img.src = item.dataURL; img.onload = () => {
     const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
     c.getContext('2d').drawImage(img, 0, 0);
-    c.toBlob(b => b && downloadBlob(b, `\( {stripExt(item.file.name)} \){ext}`), fmt);
+    // Added backslashes for string interpolation to prevent error in code blocks
+    c.toBlob(b => b && downloadBlob(b, `\({stripExt(item.file.name)} \){ext}`), fmt);
     if (++s === files.length) showSuccess("Converted!");
   };});
 });

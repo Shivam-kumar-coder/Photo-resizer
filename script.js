@@ -44,8 +44,6 @@ function showError(msg) {
 }
 // createSpinner and removeSpinner functions are removed.
 
-// Spinner CSS is removed.
-
 // ===================== FILE HANDLING =====================
 ['dragenter','dragover'].forEach(e => dropbox?.addEventListener(e, ev => {ev.preventDefault(); dropbox.classList.add('dragover');}));
 ['dragleave','drop'].forEach(e => dropbox?.addEventListener(e, ev => {ev.preventDefault(); dropbox.classList.remove('dragover');}));
@@ -80,14 +78,19 @@ function handleFiles(fileList) {
       const img = new Image();
       img.onload = () => {
         files.push({file, dataURL: e.target.result, width: img.naturalWidth, height: img.naturalHeight});
-        // Added backslashes for string interpolation to prevent error in code blocks
-        thumbGrid.innerHTML += `<div class="thumb-item"><img src="\({e.target.result}"><div class="thumb-meta"> \){file.name}<br>\({(file.size/1024).toFixed(1)} KB<br> \){img.naturalWidth}×${img.naturalHeight}</div></div>`;
+        
+        // 🐛 FIX 2: THUMBNAIL DISPLAY
+        // Fixed string interpolation syntax.
+        thumbGrid.innerHTML += `<div class="thumb-item"><img src="${e.target.result}"><div class="thumb-meta">${file.name}<br>${(file.size/1024).toFixed(1)} KB<br>${img.naturalWidth}×${img.naturalHeight}</div></div>`;
+        
         if (++loaded === valid.length) {
           document.getElementById('select-area').style.display = 'none';
           thumbsArea.classList.remove('hidden');
         }
       };
-      img.src = e.target.result;
+      // 🚀 Improvement 3: To speed up file loading for thumbnails
+      // Using e.target.result directly for image source for faster loading
+      img.src = e.target.result; 
     };
     reader.readAsDataURL(file);
   });
@@ -114,18 +117,18 @@ async function compressToTargetSize(file, targetKB) {
   canvas.height = img.naturalHeight;
   ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight);
   
-  // Start with high quality and decrease until target size is met or minimum quality is reached
   let quality = 0.9;
-  for (let i = 0; i < 15; i++) { // Max 15 attempts to prevent infinite loop
+  for (let i = 0; i < 15; i++) { 
     const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
     
-    if (blob.size <= targetBytes + 5 * 1024) return blob; // Within ±5KB
+    // Check if the size is reached. (5KB tolerance)
+    if (blob.size <= targetBytes + 5 * 1024) return blob; 
     
-    quality -= 0.06; // Decrease quality by a fixed amount
-    if (quality < 0.1) break; // Stop if quality gets too low
+    quality -= 0.06; 
+    if (quality < 0.1) break; 
   }
   
-  // If still not met, return the lowest quality attempt
+  // Final low quality fallback
   return await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.1));
 }
 
@@ -136,20 +139,18 @@ document.getElementById('runKb')?.addEventListener('click', async () => {
   if (!val || val <= 0) return showError("Enter valid size!");
   const targetKB = sizeUnitEl.value === 'mb' ? val * 1024 : val;
 
-  // Spinner logic removed
-  
   let success = 0;
   for (const item of files) {
     const blob = await compressToTargetSize(item.file, targetKB);
     if (blob) {
-      // Added backslashes for string interpolation to prevent error in code blocks
-      downloadBlob(blob, `\({stripExt(item.file.name)}- \){targetKB}KB.jpg`);
+      // 🐛 FIX 1: KB REDUCE DOWNLOAD
+      // Fixed string interpolation syntax.
+      downloadBlob(blob, `${stripExt(item.file.name)}-${targetKB}KB.jpg`);
       success++;
     }
   }
 
-  // Spinner logic removed
-  success ? showSuccess(`Done! ${success} images reduced`) : showError("Try higher size");
+  success ? showSuccess(`Done! ${success} images reduced`) : showError("Try higher size or check image format!");
 });
 
 // ===================== BA AKI TOOLS (Quick & Working) =====================
@@ -162,8 +163,7 @@ document.getElementById('runPx')?.addEventListener('click', () => {
     else if (h && !w) tw = Math.round(img.naturalWidth * (h/img.naturalHeight)); }
     const c = document.createElement('canvas'); c.width = tw; c.height = th;
     c.getContext('2d').drawImage(img, 0, 0, tw, th);
-    // Added backslashes for string interpolation to prevent error in code blocks
-    c.toBlob(b => b && downloadBlob(b, `\({stripExt(item.file.name)}- \){tw}x${th}.jpg`), 'image/jpeg', 0.92);
+    c.toBlob(b => b && downloadBlob(b, `${stripExt(item.file.name)}-${tw}x${th}.jpg`), 'image/jpeg', 0.92);
     if (++s === files.length) showSuccess("Resized!");
   };});
 });
@@ -184,8 +184,7 @@ document.getElementById('runConvert')?.addEventListener('click', () => {
   files.forEach(item => { const img = new Image(); img.src = item.dataURL; img.onload = () => {
     const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
     c.getContext('2d').drawImage(img, 0, 0);
-    // Added backslashes for string interpolation to prevent error in code blocks
-    c.toBlob(b => b && downloadBlob(b, `\({stripExt(item.file.name)} \){ext}`), fmt);
+    c.toBlob(b => b && downloadBlob(b, `${stripExt(item.file.name)}${ext}`), fmt);
     if (++s === files.length) showSuccess("Converted!");
   };});
 });

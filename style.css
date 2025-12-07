@@ -63,3 +63,23 @@ body{font-family:system-ui,Arial,sans-serif;background:var(--bg);color:#0f172a;l
   from {transform: translateX(100%);opacity:0;}
   to {transform: translateX(0);opacity:1;}
 }
+/* TOAST MESSAGES (Green & Red) */
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  color: white;
+  z-index: 9999;
+  animation: slideInRight 0.4s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.toast.success { background: #1abc9c; }
+.toast.error   { background: #e74c3c; }
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}

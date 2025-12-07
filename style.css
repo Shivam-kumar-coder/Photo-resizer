@@ -122,3 +122,17 @@ body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif;background:var(--bg)
   .row{flex-direction:column;align-items:stretch}
   .thumb-grid{grid-template-columns:1fr 1fr}
 }
+/* Custom CSS for adding space between Tools and SEO Content */
+
+/* Adding Margin to the bottom of the tools section */
+.tools {
+    margin-bottom: 40px; /* Adjust this value (e.g., 30px, 50px) for more or less space */
+    padding-bottom: 20px; /* Optional: adds a little padding inside the section */
+}
+
+/* Adding Padding to the top of the SEO content section */
+.seo-content-ux {
+    padding-top: 40px !important; /* Ensures space above the content */
+    /* हमने content-ux में पहले से ही padding: 20px 16px; दिया था, 
+       इसलिए यह वैल्यू उस पर overwrite हो जाएगी। */
+}

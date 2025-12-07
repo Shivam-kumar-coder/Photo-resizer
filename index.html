@@ -13,10 +13,11 @@
     <div class="header-inner">
       <div class="brand">QuickPic</div>
       <nav class="nav" role="navigation" aria-label="Tools">
-        <button class="nav-btn active" data-tool="tool-kb">KB / MB</button>
+        <button class="nav-btn active" data-tool="tool-kb">KB Reducer</button>
         <button class="nav-btn" data-tool="tool-px">W×H</button>
         <button class="nav-btn" data-tool="tool-compress">Compress</button>
         <button class="nav-btn" data-tool="tool-convert">Convert</button>
+        <button class="nav-btn" data-tool="tool-passport">Passport</button>
         <button class="nav-btn" data-tool="tool-pdf">Image → PDF</button>
       </nav>
     </div>
@@ -24,7 +25,6 @@
 
   <main class="main-container">
 
-    <!-- Upload Area -->
     <section id="select-area" class="card drop-card">
       <div id="dropbox" class="dropbox">
         <div class="drop-ico">Upload</div>
@@ -37,7 +37,6 @@
       </div>
     </section>
 
-    <!-- Thumbnails -->
     <section id="thumbs-area" class="card thumbs hidden">
       <div id="thumb-grid" class="thumb-grid"></div>
       <div class="thumb-actions">
@@ -45,15 +44,14 @@
       </div>
     </section>
 
-    <!-- Tools Section -->
     <section class="tools">
 
       <div id="tool-kb" class="tool-panel card visible">
-        <h2>Resize to Target Size (KB / MB)</h2>
+        <h2>Reduce Image Size to KB</h2>
         <div class="row">
-          <input id="targetSize" type="number" placeholder="Enter size (e.g. 100)" min="1" />
-          <select id="sizeUnit"><option value="kb">KB</option><option value="mb">MB</option></select>
-          <button id="runKb" class="btn">Start</button>
+          <input id="targetSize" type="number" placeholder="Enter target KB (e.g. 100)" min="1" />
+          <select id="sizeUnit"><option value="kb">KB</option></select>
+          <button id="runKb" class="btn">Start Reducing</button>
         </div>
         <p class="hint">Reduces quality & scales down until target size is reached.</p>
       </div>
@@ -90,6 +88,14 @@
             <option value="image/webp">Convert → WebP</option>
           </select>
           <button id="runConvert" class="btn">Convert & Download</button>
+        </div>
+      </div>
+      
+      <div id="tool-passport" class="tool-panel card">
+        <h2>Passport Size Photo (35x45mm)</h2>
+        <div class="row">
+          <p class="hint">Outputs high quality, center-cropped 35x45mm photo (300 DPI).</p>
+          <button id="runPassport" class="btn">Create Passport Photo</button>
         </div>
       </div>
 

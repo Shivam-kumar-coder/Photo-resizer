@@ -1,11 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    
     <title>KB Reducer, Image Resize to KB/Pixel, Photo Compressor, Convert & PDF Tool Free Online | QuickPic SKS Technologies</title>
 
     <meta name="description" content="QuickPic is the #1 Free Client-Side Image Tool for India. Reduce photo size to exact KB (10kb, 20kb, 50kb, 100kb), Resize image by pixel (Width x Height), Compress JPG, PNG, WEBP quality, Convert image formats (JPG to PNG, PNG to JPG, etc.), Create instant Passport Photos (35x45mm), and Merge multiple Images to a Single PDF. Fastest, secure, and fully private image processing solution. Developed by SKS Technologies. | KB Reducer, 50kb photo resize, 10kb photo maker, online free tool, passport photo size, image to pdf merge, image compressor, resize photo by pixel, upsc photo size, ssc photo size, aadhar card photo resize." />
-    
+
     <meta name="keywords" content="kb reducer, image size reduce, 50kb photo resize, 100kb photo resize, resize image by pixel, compress jpg, compress png, image to pdf, merge image to pdf, passport photo size, 35x45mm photo resize, online image editor free, free image tool, sks technologies, aadhar card photo resize, upsc photo size, ssc photo kb size, chola finance tool, best image converter, batch image resize, 10kb photo maker, photo compressor for government forms, resize photo by width and height, jpg to png converter, png to jpg converter, webp converter, multiple image to single pdf, photo ka size kam karna, photo ka size 50 kb kaise kare, photo ka size 10 kb kaise kare, photo compressor online free, online photo resizer, image dimensions changer, photo size km karna, free photo size reducer india, 413x531 photo maker, image utility free, ssc form photo size fixer, bank form image size, free photo resize no watermark, online image optimizer, digital signature size reduce, kb रिड्यूसर, इमेज साइज़ कम करें, 50 केबी फ़ोटो साइज़, फ़्री ऑनलाइन टूल, पासपोर्ट साइज़ फ़ोटो मेकर, इमेज से पीडीएफ़, फ़ोटो को कंप्रेस करें, पिक्सल में साइज़ बदलें, आधार कार्ड फ़ोटो साइज़, सरकारी फ़ॉर्म फ़ोटो साइज़, इमेज कनवर्टर फ़्री" />
+
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
   <header class="site-header">
@@ -13,15 +19,10 @@
       <div class="brand">QuickPic</div>
       <nav class="nav" role="navigation" aria-label="Tools">
         <button class="nav-btn active" data-tool="tool-kb">KB Reducer</button>
-        
         <button class="nav-btn" data-tool="tool-px">Width × Height</button>
-
         <button class="nav-btn" data-tool="tool-compress">Compress</button>
-        
         <button class="nav-btn" data-tool="tool-convert">Convert</button>
-
         <button class="nav-btn" data-tool="tool-passport">Passport</button>
-        
         <button class="nav-btn" data-tool="tool-pdf">Image → PDF</button>
       </nav>
     </div>
@@ -46,8 +47,9 @@
       <div class="thumb-actions">
         <button id="resetBtn" class="btn secondary">Upload New Images</button>
       </div>
-    </section><section class="tools">
-
+    </section>
+    
+    <section class="tools">
       <div id="tool-kb" class="tool-panel card visible">
         <h2>Reduce Image Size to KB</h2>
         <div class="row">
@@ -57,7 +59,7 @@
         </div>
         <p class="hint">Reduces quality & scales down until target size is reached.</p>
       </div>
-
+      
       <div id="tool-px" class="tool-panel card">
         <h2>Resize by Width × Height (px)</h2>
         <div class="row">
@@ -69,7 +71,7 @@
           <button id="runPx" class="btn">Resize & Download</button>
         </div>
       </div>
-
+      
       <div id="tool-compress" class="tool-panel card">
         <h2>Compress Image (Quality)</h2>
         <div class="row">
@@ -80,7 +82,7 @@
           <button id="runCompress" class="btn">Compress & Download</button>
         </div>
       </div>
-
+      
       <div id="tool-convert" class="tool-panel card">
         <h2>Convert Image Format</h2>
         <div class="row">
@@ -100,7 +102,7 @@
           <button id="runPassport" class="btn">Create Passport Photo</button>
         </div>
       </div>
-
+      
       <div id="tool-pdf" class="tool-panel card">
         <h2>Export Images as PDF</h2>
         <p class="hint">Choose whether to combine all images into one PDF or export each image separately.</p>
@@ -110,39 +112,40 @@
         </div>
       </div>
 
-    </section><section class="seo-content-ux" style="padding: 20px 16px; text-align: center;">
-    
-    <h1>QuickPic: The Fastest Client-Side Image Tool</h1>
+    </section>
 
-    <p style="max-width: 800px; margin: 15px auto 30px; font-size: 1.1em; color: #444;">
-        Welcome to QuickPic, powered by SKS Technologies. We provide the quickest, most secure solution for your image needs. Use our tools to <a href="#" data-tool-link="tool-kb">Reduce Image Size to KB</a>, <a href="#" data-tool-link="tool-px">Resize by Pixel</a>, <a href="#" data-tool-link="tool-compress">Compress JPG</a>, and <a href="#" data-tool-link="tool-pdf">Merge to PDF</a>. All processing is **instant** and happens **only in your browser**—ensuring 100% privacy.
-    </p>
+    <section class="seo-content-ux" style="padding: 20px 16px; text-align: center;">
 
-    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 900px; margin: 0 auto;">
-        
-        <div style="flex: 1 1 250px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; text-align: left;">
-            <h3 style="color: var(--accent); margin-top: 0;">🎯 Exact KB Reducer</h3>
-            <p style="font-size: 0.95em; color: #666;">Fix errors for **50 KB** or **100 KB** file limits instantly. Perfect for all government and educational applications.</p>
-        </div>
-        
-        <div style="flex: 1 1 250px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; text-align: left;">
-            <h3 style="color: var(--accent); margin-top: 0;">🌐 Full Privacy</h3>
-            <p style="font-size: 0.95em; color: #666;">Your images are never uploaded to any server. Client-side processing guarantees security and speed.</p>
-        </div>
-        
-        <div style="flex: 1 1 250px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; text-align: left;">
-            <h3 style="color: var(--accent); margin-top: 0;">⚡ Batch Processing</h3>
-            <p style="font-size: 0.95em; color: #666;">Process multiple images at once—Resize, Compress, or Convert them in a single click.</p>
-        </div>
+      <h1>QuickPic: The Fastest Client-Side Image Tool</h1>
 
-    </div>
+      <p style="max-width: 800px; margin: 15px auto 30px; font-size: 1.1em; color: #444;">
+          Welcome to QuickPic, powered by SKS Technologies. We provide the quickest, most secure solution for your image needs. Use our tools to <a href="#" data-tool-link="tool-kb">Reduce Image Size to KB</a>, <a href="#" data-tool-link="tool-px">Resize by Pixel</a>, <a href="#" data-tool-link="tool-compress">Compress JPG</a>, and <a href="#" data-tool-link="tool-pdf">Merge to PDF</a>. All processing is **instant** and happens **only in your browser**—ensuring 100% privacy.
+      </p>
 
-    <div style="opacity: 0.01; height: 1px; overflow: hidden; font-size: 1px; margin-top: 50px;">
-        क्विकपिक: भारत का सबसे तेज़ फ़्री KB Reducer, फ़ोटो कंप्रेस और साइज़ बदलने का उपकरण | 50 KB Photo Resize Online Free | 100 KB Photo Resize Online | फोटो का साइज़ 20 KB कैसे करें | Aadhar Card Photo Resize KB | Resize Image by Pixel | Compress JPG/PNG | Image to PDF Merge | Passport Photo Maker | 35mm x 45mm photo resize | 413x531 pixel photo | free kb reducer online | best photo size reducer for government forms | image size converter to 50 kb | photo compressor for upsc ssc | resize photo by width and height in pixels | free jpg compressor | png compressor online | batch image processing tool | merge multiple images into one pdf | create passport size photo 35x45mm | online free image editor | secure client-side image processing | sks technologies image tool | chola finance document resize | exam application photo resizer | digital signature size reduce | photo size km karna in english | online tool for students and professionals | resize image for job applications | free online photo resizing tool no watermark | image optimizer for websites | free image compression service | no watermarks image tool | private image processing | client-side photo processing | ssc photo resize 2024 | online kb reducer in hindi | free kb reducer india.
-        
-    </div>
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 900px; margin: 0 auto;">
+          
+          <div style="flex: 1 1 250px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; text-align: left;">
+              <h3 style="color: var(--accent); margin-top: 0;">🎯 Exact KB Reducer</h3>
+              <p style="font-size: 0.95em; color: #666;">Fix errors for **50 KB** or **100 KB** file limits instantly. Perfect for all government and educational applications.</p>
+          </div>
+          
+          <div style="flex: 1 1 250px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; text-align: left;">
+              <h3 style="color: var(--accent); margin-top: 0;">🌐 Full Privacy</h3>
+              <p style="font-size: 0.95em; color: #666;">Your images are never uploaded to any server. Client-side processing guarantees security and speed.</p>
+          </div>
+          
+          <div style="flex: 1 1 250px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; text-align: left;">
+              <h3 style="color: var(--accent); margin-top: 0;">⚡ Batch Processing</h3>
+              <p style="font-size: 0.95em; color: #666;">Process multiple images at once—Resize, Compress, or Convert them in a single click.</p>
+          </div>
 
-</section>
+      </div>
+
+      <div style="opacity: 0.01; height: 1px; overflow: hidden; font-size: 1px; margin-top: 50px;">
+          क्विकपिक: भारत का सबसे तेज़ फ़्री KB Reducer, फ़ोटो कंप्रेस और साइज़ बदलने का उपकरण | 50 KB Photo Resize Online Free | 100 KB Photo Resize Online | फोटो का साइज़ 20 KB कैसे करें | Aadhar Card Photo Resize KB | Resize Image by Pixel | Compress JPG/PNG | Image to PDF Merge | Passport Photo Maker | 35mm x 45mm photo resize | 413x531 pixel photo | free kb reducer online | best photo size reducer for government forms | image size converter to 50 kb | photo compressor for upsc ssc | resize photo by width and height in pixels | free jpg compressor | png compressor online | batch image processing tool | merge multiple images into one pdf | create passport size photo 35x45mm | online free image editor | secure client-side image processing | sks technologies image tool | chola finance document resize | exam application photo resizer | digital signature size reduce | photo size km karna in english | online tool for students and professionals | resize image for job applications | free online photo resizing tool no watermark | image optimizer for websites | free image compression service | no watermarks image tool | private image processing | client-side photo processing | ssc photo resize 2024 | online kb reducer in hindi | free kb reducer india.
+      </div>
+
+    </section>
 
 
   </main>

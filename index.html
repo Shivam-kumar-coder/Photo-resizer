@@ -105,11 +105,23 @@
       </div>
 
       <div id="tool-pdf" class="tool-panel card">
-        <h2>Export Selected Images as PDF</h2>
-        <div class="row">
-          <label class="muted">Each image becomes one PDF page (A4, centered).</label>
-          <button id="runPdf" class="btn">Export PDF</button>
+        <h2>Export Images as PDF</h2>
+        <p class="hint">Choose whether to combine all images into one PDF or export each image separately.</p>
+        <div class="row" style="margin-top: 10px;">
+          <button id="runPdfMerge" class="btn" style="flex: 1; background: var(--blue);">Merge All Images (Single PDF)</button>
+          <button id="runPdfSeparate" class="btn secondary" style="flex: 1;">Export as Separate PDFs</button>
         </div>
+      </div>
+
+    </section>
+  </main>
+
+  <footer class="site-footer">© QuickPic — Privacy first. Files processed in your browser.</footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
       </div>
 
     </section>

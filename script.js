@@ -11,18 +11,21 @@ const navButtons = document.querySelectorAll('.nav-btn');
 const toolPanels = document.querySelectorAll('.tool-panel');
 
 const targetSizeEl = document.getElementById('targetSize');
-const sizeUnitEl = document.getElementById('sizeUnit'); // Still exists for KB
+const sizeUnitEl = document.getElementById('sizeUnit');
 const widthPxEl = document.getElementById('widthPx');
 const heightPxEl = document.getElementById('heightPx');
 const keepAspectEl = document.getElementById('keepAspect');
 const qualitySlider = document.getElementById('qualitySlider');
 const qualityVal = document.getElementById('qualityVal');
 const convertFormat = document.getElementById('convertFormat');
-const runPassportBtn = document.getElementById('runPassport'); // New Passport button ID
+const runPassportBtn = document.getElementById('runPassport'); 
+// New PDF Buttons
+const runPdfMergeBtn = document.getElementById('runPdfMerge');
+const runPdfSeparateBtn = document.getElementById('runPdfSeparate');
 
 let files = [];
 
-// ===================== 3 & 4. TOAST MESSAGES =====================
+// ===================== TOAST MESSAGES & UTILITIES =====================
 function showToast(msg, type) {
     const t = document.createElement('div');
     t.textContent = msg;
@@ -34,7 +37,6 @@ function showToast(msg, type) {
 function showSuccess(msg) { return showToast(msg, 'success'); }
 function showError(msg) { return showToast(msg, 'error'); }
 
-// ===================== UTILITIES =====================
 function dataURLtoBlob(dataURL) {
     const arr = dataURL.split(',');
     const mime = arr[0].match(/:(.*?);/)[1];
@@ -50,7 +52,7 @@ function downloadBlob(blob, name) {
     const a = document.createElement('a');
     a.href = url; a.download = name; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 100);
-    showSuccess(`Downloading ${files.length > 1 ? 'files' : name}`);
+    // Success message moved to individual tool handlers for better context
 }
 
 function stripExt(name) {
@@ -66,18 +68,15 @@ function loadImage(dataURL) {
     });
 }
 
-// ===================== FILE HANDLING =====================
-// Drag & Drop Highlight
+// ===================== FILE HANDLING & UX =====================
 ['dragenter', 'dragover'].forEach(e => dropbox.addEventListener(e, () => dropbox.classList.add('dragover')));
 ['dragleave', 'drop'].forEach(e => dropbox.addEventListener(e, () => dropbox.classList.remove('dragover')));
 dropbox.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); handleFiles(e.dataTransfer.files); });
 
-// File selection
 selectBtn.onclick = browseText.onclick = () => fileInput.click();
 fileInput.onchange = e => handleFiles(e.target.files);
 resetBtn.onclick = resetAll;
 
-// Tool Switching
 navButtons.forEach(btn => {
     btn.onclick = () => {
         navButtons.forEach(b => b.classList.remove('active'));
@@ -87,7 +86,6 @@ navButtons.forEach(btn => {
     };
 });
 
-// 5. Multiple Image Select & Processing Logic
 function handleFiles(fileList) {
     const valid = Array.from(fileList).filter(f => f.type.startsWith('image/'));
     if (!valid.length) return showError('Please select valid images (JPG/PNG/WebP)');
@@ -101,7 +99,12 @@ function handleFiles(fileList) {
             reader.onload = e => {
                 const img = new Image();
                 img.onload = () => {
-                    files.push({ file, dataURL: e.target.result, width: img.naturalWidth, height: img.naturalHeight });
+                    files.push({ 
+                        file, 
+                        dataURL: e.target.result, 
+                        width: img.naturalWidth, 
+                        height: img.naturalHeight 
+                    });
                     addThumb(file.name, e.target.result, img.naturalWidth, img.naturalHeight, file.size);
                     resolve();
                 };
@@ -111,8 +114,11 @@ function handleFiles(fileList) {
         });
     });
 
-    // Wait for all images to be read and meta data stored
-    Promise.all(filePromises).then(afterFilesLoaded);
+    Promise.all(filePromises).then(() => {
+        files.sort((a, b) => a.file.name.localeCompare(b.file.name)); // Sort by name
+        document.getElementById('select-area').style.display = 'none';
+        thumbsArea.classList.remove('hidden');
+    });
 }
 
 function addThumb(name, src, w, h, size) {
@@ -123,18 +129,14 @@ function addThumb(name, src, w, h, size) {
     thumbGrid.appendChild(div);
 }
 
-function afterFilesLoaded() {
-    document.getElementById('select-area').style.display = 'none';
-    thumbsArea.classList.remove('hidden');
-}
-
 function resetAll() {
     files = []; thumbGrid.innerHTML = ''; fileInput.value = '';
     thumbsArea.classList.add('hidden');
     document.getElementById('select-area').style.display = 'block';
 }
 
-// ===================== 1. KB REDUCER LOGIC (only KB) =====================
+
+// ===================== 1. KB REDUCER LOGIC =====================
 async function compressToTargetSize(file, targetKB) {
     const targetBytes = targetKB * 1024;
     const dataURL = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
@@ -149,27 +151,22 @@ async function compressToTargetSize(file, targetKB) {
     let scale = 1;
 
     for (let iter = 0; iter < 18; iter++) {
-        // Clear canvas and draw scaled image
         const w = Math.max(1, Math.round(img.naturalWidth * scale));
         const h = Math.max(1, Math.round(img.naturalHeight * scale));
         canvas.width = w; canvas.height = h;
         ctx.drawImage(img, 0, 0, w, h);
         
-        // Convert to data URL and then to Blob for size check
         const data = canvas.toDataURL('image/jpeg', quality);
         const blob = dataURLtoBlob(data);
 
-        // Check size: If reached or below tolerance
         if (blob.size <= targetBytes + 5 * 1024) return blob; 
 
-        // Adjust parameters: first drop quality, then scale
         if (quality > 0.3) quality -= 0.08;
         else scale -= 0.08;
 
         if (quality < 0.1 || scale < 0.1) break; 
     }
     
-    // Final attempt at lowest quality
     const finalData = canvas.toDataURL('image/jpeg', 0.1);
     return dataURLtoBlob(finalData);
 }
@@ -179,7 +176,7 @@ document.getElementById('runKb').addEventListener('click', async () => {
     const val = Number(targetSizeEl.value);
     if (!val || val <= 0) return showError('Enter valid target KB size.');
     
-    const targetKB = val; // Always KB now
+    const targetKB = val; 
     let processedCount = 0;
 
     for (const item of files) {
@@ -191,11 +188,12 @@ document.getElementById('runKb').addEventListener('click', async () => {
             console.error(err);
         }
     }
-    if (processedCount === 0) showError('Error processing images. Try a higher target size.');
+    if (processedCount > 0) showSuccess(`Successfully reduced ${processedCount} image(s) to ${targetKB} KB!`);
+    else showError('Error processing images. Try a higher target size.');
 });
 
 
-// ===================== PX RESIZE TOOL (Async/Await Improvement) =====================
+// ===================== 2. PX RESIZE TOOL (Multi-Image Fixed) =====================
 document.getElementById('runPx').addEventListener('click', async () => {
     if (!files.length) return showError('Upload image(s) first.');
     const w = Number(widthPxEl.value);
@@ -203,6 +201,7 @@ document.getElementById('runPx').addEventListener('click', async () => {
     const keep = keepAspectEl.checked;
     if (!w && !h) return showError('Enter width or height.');
     
+    let processedCount = 0;
     for (const item of files) {
         const img = await loadImage(item.dataURL);
         let tw = w || img.naturalWidth;
@@ -219,15 +218,18 @@ document.getElementById('runPx').addEventListener('click', async () => {
         
         const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.92));
         downloadBlob(blob, `${stripExt(item.file.name)}-resized-${tw}x${th}.jpg`);
+        processedCount++;
     }
+    if (processedCount > 0) showSuccess(`Successfully resized ${processedCount} image(s)!`);
 });
 
-// ===================== COMPRESS TOOL (Async/Await Improvement) =====================
+// ===================== 3. COMPRESS TOOL (Multi-Image Fixed) =====================
 qualitySlider.addEventListener('input', () => qualityVal.textContent = qualitySlider.value);
 document.getElementById('runCompress').addEventListener('click', async () => {
     if (!files.length) return showError('Upload image(s) first.');
     const q = Number(qualitySlider.value) / 100;
     
+    let processedCount = 0;
     for (const item of files) {
         const img = await loadImage(item.dataURL);
         const c = document.createElement('canvas');
@@ -236,15 +238,19 @@ document.getElementById('runCompress').addEventListener('click', async () => {
         
         const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', q));
         downloadBlob(blob, `${stripExt(item.file.name)}-compressed.jpg`);
+        processedCount++;
     }
+    if (processedCount > 0) showSuccess(`Successfully compressed ${processedCount} image(s) to ${qualitySlider.value}% quality!`);
 });
 
-// ===================== CONVERT TOOL (Async/Await Improvement) =====================
+// ===================== 4. CONVERT TOOL (Multi-Image Fixed & Naming Fixed) =====================
 document.getElementById('runConvert').addEventListener('click', async () => {
     if (!files.length) return showError('Upload image(s) first.');
     const fmt = convertFormat.value;
+    const extName = convertFormat.options[convertFormat.selectedIndex].text.split('→ ')[1];
     const ext = fmt === 'image/png' ? '.png' : fmt === 'image/webp' ? '.webp' : '.jpg';
     
+    let processedCount = 0;
     for (const item of files) {
         const img = await loadImage(item.dataURL);
         const c = document.createElement('canvas');
@@ -252,18 +258,21 @@ document.getElementById('runConvert').addEventListener('click', async () => {
         c.getContext('2d').drawImage(img, 0, 0);
         
         const blob = await new Promise(res => c.toBlob(res, fmt));
-        downloadBlob(blob, `${stripExt(item.file.name)}${ext}`);
+        // NAMING FIX: Includes the target format name
+        downloadBlob(blob, `${stripExt(item.file.name)}-converted-to-${extName.toLowerCase()}.jpg`);
+        processedCount++;
     }
+    if (processedCount > 0) showSuccess(`Successfully converted ${processedCount} image(s) to ${extName}!`);
 });
-
-// ===================== 2. PASSPORT SIZE TOOL (New Feature) =====================
+      
+// ===================== 5. PASSPORT SIZE TOOL (Multi-Image Fixed) =====================
 runPassportBtn.addEventListener('click', async () => {
     if (!files.length) return showError('Upload image(s) first.');
     
-    // Target dimensions for 35x45mm at 300 DPI: W=413px, H=531px
-    const TARGET_W = 413;
-    const TARGET_H = 531;
+    const TARGET_W = 413; // 35mm at 300 DPI
+    const TARGET_H = 531; // 45mm at 300 DPI
 
+    let processedCount = 0;
     for (const item of files) {
         const img = await loadImage(item.dataURL);
         
@@ -271,53 +280,84 @@ runPassportBtn.addEventListener('click', async () => {
         c.width = TARGET_W; c.height = TARGET_H;
         const ctx = c.getContext('2d');
         
-        // Calculate crop to fit (Scale up until image covers target size)
         const scale = Math.max(TARGET_W / img.naturalWidth, TARGET_H / img.naturalHeight);
         const scaledW = img.naturalWidth * scale;
         const scaledH = img.naturalHeight * scale;
         
-        // Center the scaled image
         const dx = (TARGET_W - scaledW) / 2;
         const dy = (TARGET_H - scaledH) / 2;
 
         ctx.drawImage(img, dx, dy, scaledW, scaledH);
         
-        // Output as high quality JPG
         const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.95));
         downloadBlob(blob, `${stripExt(item.file.name)}-passport.jpg`);
+        processedCount++;
     }
+    if (processedCount > 0) showSuccess(`Successfully created ${processedCount} passport photo(s)!`);
 });
 
 
-// ===================== PDF TOOL (Async/Await Improvement) =====================
-document.getElementById('runPdf').addEventListener('click', async () => {
-    if (!files.length) return showError('Upload image(s) first.');
+// ===================== 6. PDF TOOL (Merge & Separate Options Fixed) =====================
+
+// Function to process and download a single PDF
+async function processAndDownloadPDF(fileList, isMerge) {
+    if (!window.jspdf) return showError("PDF library not loaded.");
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
     
-    for (let i = 0; i < files.length; i++) {
-        const item = files[i];
+    if (isMerge) {
+        const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
         
-        // Must wait for image load to get dimensions
-        const img = await loadImage(item.dataURL);
+        for (let i = 0; i < fileList.length; i++) {
+            const item = fileList[i];
+            const img = await loadImage(item.dataURL);
 
-        const pageW = pdf.internal.pageSize.getWidth();
-        const pageH = pdf.internal.pageSize.getHeight();
+            const pageW = pdf.internal.pageSize.getWidth();
+            const pageH = pdf.internal.pageSize.getHeight();
+            
+            const ratio = Math.min(pageW / img.naturalWidth, pageH / img.naturalHeight);
+            const drawW = img.naturalWidth * ratio;
+            const drawH = img.naturalHeight * ratio;
+            const x = (pageW - drawW) / 2;
+            const y = (pageH - drawH) / 2;
+            
+            if (i > 0) pdf.addPage();
+            
+            pdf.addImage(img, 'JPEG', x, y, drawW, drawH);
+        }
         
-        // Calculate fit ratio
-        const ratio = Math.min(pageW / img.naturalWidth, pageH / img.naturalHeight);
-        const drawW = img.naturalWidth * ratio;
-        const drawH = img.naturalHeight * ratio;
-        const x = (pageW - drawW) / 2;
-        const y = (pageH - drawH) / 2;
-        
-        if (i > 0) pdf.addPage();
-        
-        // Add image to PDF
-        pdf.addImage(img, 'JPEG', x, y, drawW, drawH);
+        pdf.save('QuickPic-Merged-Images.pdf');
+        showSuccess("Successfully merged all images into one PDF!");
+
+    } else { // Separate PDFs
+        let processedCount = 0;
+        for (const item of fileList) {
+            const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+            const img = await loadImage(item.dataURL);
+
+            const pageW = pdf.internal.pageSize.getWidth();
+            const pageH = pdf.internal.pageSize.getHeight();
+            
+            const ratio = Math.min(pageW / img.naturalWidth, pageH / img.naturalHeight);
+            const drawW = img.naturalWidth * ratio;
+            const drawH = img.naturalHeight * ratio;
+            const x = (pageW - drawW) / 2;
+            const y = (pageH - drawH) / 2;
+            
+            pdf.addImage(img, 'JPEG', x, y, drawW, drawH);
+            pdf.save(`${stripExt(item.file.name)}.pdf`);
+            processedCount++;
+        }
+        showSuccess(`Successfully exported ${processedCount} separate PDF files!`);
     }
-    
-    // Save PDF outside the loop
-    pdf.save(files.length > 1 ? 'images.pdf' : `${stripExt(files[0].file.name)}.pdf`);
-    showSuccess("PDF Export Complete!");
+}
+
+runPdfMergeBtn.addEventListener('click', () => {
+    if (!files.length) return showError('Upload image(s) first.');
+    processAndDownloadPDF(files, true); // true for Merge
 });
+
+runPdfSeparateBtn.addEventListener('click', () => {
+    if (!files.length) return showError('Upload image(s) first.');
+    processAndDownloadPDF(files, false); // false for Separate
+});
+

@@ -511,4 +511,17 @@ if (passportBtn) {
   };
 }
 
+// Green Success Message (Ab dikhega!)
+function showSuccessBox(msg) {
+  // Remove old one
+  const old = document.querySelector('.success-toast');
+  if (old) old.remove();
+
+  const d = document.createElement("div");
+  d.className = "success-toast";
+  d.innerText = msg;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 3000);
+}
+
 // ================== END ==================

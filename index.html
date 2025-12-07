@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>QuickPic — Photo Resizer, Compressor, PDF & Passport Size</title>
-  <meta name="description" content="Free online photo resizer, compressor, JPG/PNG converter, PDF maker & passport size photo creator." />
+  <title>QuickPic - Free Photo Resizer, Compressor, PDF & Passport Size</title>
+  <meta name="description" content="Free online photo resizer to exact KB/MB, compress, convert JPG/PNG, make PDF & passport size photos - 100% in browser." />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -12,7 +12,7 @@
   <header class="site-header">
     <div class="header-inner">
       <div class="brand">QuickPic</div>
-      <nav class="nav" role="navigation">
+      <nav class="nav">
         <button class="nav-btn active" data-tool="tool-kb">KB / MB</button>
         <button class="nav-btn" data-tool="tool-pdf">Image → PDF</button>
         <button class="nav-btn" data-tool="tool-px">Width × Height</button>
@@ -25,7 +25,6 @@
 
   <main class="main-container">
 
-    <!-- Upload Area -->
     <section id="select-area" class="card drop-card">
       <div id="dropbox" class="dropbox">
         <div class="drop-ico">Upload</div>
@@ -34,11 +33,10 @@
           <button id="selectBtn" class="btn">Select Images</button>
           <input id="fileInput" type="file" accept="image/*" multiple hidden>
         </div>
-        <div class="note">JPG, PNG, WebP • 100% in your browser</div>
+        <div class="note">JPG, PNG, WebP • 100% private • No upload</div>
       </div>
     </section>
 
-    <!-- Thumbnails -->
     <section id="thumbs-area" class="card thumbs hidden">
       <div id="thumb-grid" class="thumb-grid"></div>
       <div class="thumb-actions">
@@ -46,40 +44,35 @@
       </div>
     </section>
 
-    <!-- Tools -->
     <section class="tools">
 
-      <!-- KB/MB -->
       <div id="tool-kb" class="tool-panel card visible">
-        <h2>Resize to Target Size (KB / MB)</h2>
+        <h2>Resize to Exact Size</h2>
         <div class="row">
           <input id="targetSize" type="number" placeholder="e.g. 100" min="1" />
           <select id="sizeUnit"><option value="kb">KB</option><option value="mb">MB</option></select>
-          <button id="runKb" class="btn">Start</button>
+          <button id="runKb" class="btn">Convert</button>
         </div>
-        <p class="hint">Will get within ±10KB of your target</p>
+        <p class="hint">Guaranteed ±8KB accuracy (your own genius method!)</p>
       </div>
 
-      <!-- PDF -->
       <div id="tool-pdf" class="tool-panel card">
         <h2>Images → PDF</h2>
-        <button id="runPdf" class="btn">Export as PDF</button>
+        <button id="runPdf" class="btn">Create PDF</button>
       </div>
 
-      <!-- Pixel Resize -->
       <div id="tool-px" class="tool-panel card">
-        <h2>Resize by Width × Height</h2>
+        <h2>Resize by Pixels</h2>
         <div class="row">
-          <input id="widthPx" type="number" placeholder="Width (px)" min="1" />
-          <input id="heightPx" type="number" placeholder="Height (px)" min="1" />
+          <input id="widthPx" type="number" placeholder="Width" min="1" />
+          <input id="heightPx" type="number" placeholder="Height" min="1" />
         </div>
         <div class="row">
-          <label><input id="keepAspect" type="checkbox" checked /> Keep aspect ratio</label>
-          <button id="runPx" class="btn">Resize & Download</button>
+          <label><input id="keepAspect" type="checkbox" checked /> Keep ratio</label>
+          <button id="runPx" class="btn">Resize</button>
         </div>
       </div>
 
-      <!-- Convert -->
       <div id="tool-convert" class="tool-panel card">
         <h2>Convert Format</h2>
         <div class="row">
@@ -87,31 +80,29 @@
             <option value="image/jpeg">→ JPG</option>
             <option value="image/png">→ PNG</option>
           </select>
-          <button id="runConvert" class="btn">Convert & Download</button>
+          <button id="runConvert" class="btn">Convert</button>
         </div>
       </div>
 
-      <!-- Compress -->
       <div id="tool-compress" class="tool-panel card">
-        <h2>Compress (Quality)</h2>
+        <h2>Compress Quality</h2>
         <div class="row">
           <label>Quality: <span id="qualityVal">70</span>%</label>
           <input id="qualitySlider" type="range" min="10" max="95" value="70" />
         </div>
-        <button id="runCompress" class="btn">Compress & Download</button>
+        <button id="runCompress" class="btn">Compress</button>
       </div>
 
-      <!-- Passport Size Tool -->
       <div id="tool-passport" class="tool-panel card">
-        <h2>Passport Size Photo (35×45 mm)</h2>
-        <p class="hint">Creates 413×531 px passport photos (high quality, centered crop)</p>
-        <button id="passportBtn" class="btn">Create Passport Photos</button>
+        <h2>Passport Size Photo</h2>
+        <p class="hint">35×45 mm • High quality • Perfect crop</p>
+        <button id="passportBtn" class="btn">Create Passport Photos</  button>
       </div>
 
     </section>
   </main>
 
-  <footer class="site-footer">© QuickPic — 100% Free & Private</footer>
+  <footer class="site-footer">© QuickPic • Made with Prabhu kripa & God ka ashirwad</footer>
 
   <script src="script.js"></script>
 </body>

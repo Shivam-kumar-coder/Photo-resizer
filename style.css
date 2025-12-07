@@ -3,12 +3,13 @@
   --card:#fff; --radius:10px; --maxw:1100px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif;background:var(--bg);color:#0f172a;line-height:1.5;padding-top:64px;} /* Header Height Added */
+body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif;background:var(--bg);color:#0f172a;line-height:1.5;padding-top:64px;}
 
+/* Header Section */
 .site-header{background:var(--blue);color:#fff;position:fixed;top:0;left:0;right:0;z-index:10;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
 .header-inner{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;flex-wrap:wrap;gap:10px}
 .brand{font-weight:700;font-size:20px}
-.nav{display:flex;gap:8px;flex-wrap:wrap;}
+.nav{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;} /* Default: Right align nav */
 
 .nav-btn{background:transparent;border:0;color:#fff;padding:8px 12px;cursor:pointer;font-weight:600;border-bottom:3px solid transparent;transition:0.15s;white-space:nowrap;}
 .nav-btn:hover{background:rgba(255,255,255,0.1)}
@@ -48,7 +49,7 @@ body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif;background:var(--bg)
 /* Footer */
 .site-footer{text-align:center;padding:20px;color:var(--muted);font-size:13px;margin-top:30px}
 
-/* 3 & 4. TOAST MESSAGES (Green Success & Red Error) */
+/* TOAST MESSAGES (Green Success & Red Error) */
 .toast {
   position: fixed;
   top: 20px;
@@ -69,10 +70,32 @@ body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif;background:var(--bg)
   to   { transform: translateX(0); opacity: 1; }
 }
 
-/* Responsive */
+/* Responsive Fixes for Mobile Header */
 @media(max-width:900px){.thumb-grid{grid-template-columns:repeat(3,1fr)}}
+
+@media (max-width: 650px) {
+  .header-inner {
+    align-items: flex-start; /* Logo/Brand starts from top-left */
+    padding: 10px 16px; 
+  }
+  .nav {
+    width: 100%;
+    /* Enables horizontal scrolling for the nav buttons */
+    overflow-x: auto; 
+    white-space: nowrap; 
+    padding-bottom: 5px; 
+    justify-content: flex-start; /* Buttons start from left */
+  }
+  .nav::-webkit-scrollbar {
+    display: none; /* Hide scrollbar on mobile browsers */
+  }
+  .nav-btn {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+}
+
 @media(max-width:520px){
   .row{flex-direction:column;align-items:stretch}
   .thumb-grid{grid-template-columns:1fr 1fr}
-  .nav{justify-content:center}
 }

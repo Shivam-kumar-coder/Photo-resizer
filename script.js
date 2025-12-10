@@ -551,6 +551,89 @@ runPdfSeparateBtn.addEventListener('click', () => runPDF(false));
 // =========================================================
 // INITIALIZATION
 // =========================================================
+
+// =========================================================
+// NEW: TOAST NOTIFICATION HANDLER
+// =========================================================
+
+const notificationContainer = document.getElementById('notification-container');
+
+/**
+ * Displays a toast notification on the screen.
+ * @param {string} message - The message to display.
+ * @param {string} type - 'success' (green) or 'error' (red).
+ * @param {number} duration - Time in milliseconds to show the notification.
+ */
+function showNotification(message, type = 'success', duration = 3000) {
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${type}`;
+    toast.textContent = message;
+
+    notificationContainer.appendChild(toast);
+
+    // Force reflow to ensure the transition plays
+    void toast.offsetWidth; 
+
+    // Add 'show' class to slide the toast in
+    toast.classList.add('show');
+
+    // Automatically hide the notification after the duration
+    setTimeout(() => {
+        toast.classList.remove('show');
+        
+        // Wait for the slide-out transition to finish before removing from DOM
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.parentElement.removeChild(toast);
+            }
+        }, 300); // Should match the CSS transition time
+    }, duration);
+}
+
+
+// =========================================================
+// INTEGRATION: Download/Error Notification Updates
+// =========================================================
+
+// अब आपको अपनी पुरानी 'downloadBatch' और 'processFile' के एरर हैंडलिंग को अपडेट करना होगा।
+
+// 1. 'processFile' के Catch Block को बदलें (लगभग लाइन 345)
+// OLD:
+// } catch (error) {
+//     console.error("Error processing file:", error);
+//     fileEntry.status = 'ERROR';
+//     updateThumbnailStatus(fileEntry.filename, 'ERROR');
+//     return null;
+// }
+
+// NEW CATCH BLOCK:
+} catch (error) {
+    console.error("Error processing file:", error);
+    fileEntry.status = 'ERROR';
+    updateThumbnailStatus(fileEntry.filename, 'ERROR');
+    // Show Red Box Notification:
+    showNotification(`Error: Could not process ${fileEntry.filename}.`, 'error', 5000);
+    return null;
+}
+
+
+// 2. 'downloadBatch' फ़ंक्शन को बदलें (लगभग लाइन 400)
+// OLD:
+// function downloadBatch(blobs, filenames) {
+//     alert("Batch download complete!..."); // OLD ALERT
+//     // ... download logic ...
+// }
+
+// NEW DOWNLOAD BATCH FUNCTION:
+function downloadBatch(blobs, filenames) {
+    // Show Green Box Notification:
+    showNotification(`${blobs.length} image(s) downloaded successfully!`, 'success');
+    
+    blobs.forEach((blob, index) => {
+        downloadBlob(blob, filenames[index]);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Check if there is a hash in the URL for deep linking
     checkURLHash();

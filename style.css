@@ -369,3 +369,36 @@ input[type="number"], select {
 .hidden {
     display: none !important;
 }
+
+/* ========================================================
+   NOTIFICATION (TOAST) STYLES
+   ======================================================== */
+.toast-notification {
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    opacity: 0; /* Initially hidden */
+    transform: translateX(100%); /* Start off-screen to the right */
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+/* Success (Green) Style */
+.toast-notification.success {
+    background-color: #4CAF50; /* Green */
+    border: 1px solid #388E3C;
+}
+
+/* Error (Red) Style */
+.toast-notification.error {
+    background-color: #f44336; /* Red */
+    border: 1px solid #D32F2F;
+}
+
+/* Show State */
+.toast-notification.show {
+    opacity: 1;
+    transform: translateX(0); /* Slide into view */
+}

@@ -41,14 +41,16 @@ const runConvertBtn = document.getElementById('runConvert');
 const runPdfMergeBtn = document.getElementById('runPdfMerge');
 const runPdfSeparateBtn = document.getElementById('runPdfSeparate');
 
+// NEW: Notification Container
+const notificationContainer = document.getElementById('notification-container');
+
 
 // =========================================================
-// UI SWITCHING LOGIC (Includes Deep Linking Fix)
+// UI SWITCHING & DEEP LINKING LOGIC
 // =========================================================
 
 // Function to switch tool panels and update navigation
 function switchTool(toolId) {
-    // Update state and active button
     state.activeTool = toolId;
     navButtons.forEach(btn => {
         btn.classList.remove('active');
@@ -57,7 +59,6 @@ function switchTool(toolId) {
         }
     });
 
-    // Show/Hide tool panels
     toolPanels.forEach(panel => {
         if (panel.id === toolId) {
             panel.classList.add('visible');
@@ -67,7 +68,7 @@ function switchTool(toolId) {
     });
 }
 
-// Event listeners for navigation buttons (using event delegation)
+// Event listeners for navigation buttons
 navButtons.forEach(btn => {
     btn.addEventListener('click', () => {
         const toolId = btn.getAttribute('data-tool');
@@ -81,26 +82,20 @@ document.querySelectorAll('[data-tool-link]').forEach(link => {
         e.preventDefault();
         const toolId = link.getAttribute('data-tool-link');
         switchTool(toolId);
-        // Update URL hash for deep linking
         window.location.hash = toolId;
     });
 });
 
 
-// =========================================================
-// NEW: DEEP LINKING FIX - Checks URL Hash on Load
-// =========================================================
+// Checks URL Hash on Load (Deep Linking Fix)
 function checkURLHash() {
     const hash = window.location.hash;
     if (hash) {
-        // Remove '#' from the hash to get the tool ID (e.g., "tool-pdf")
         const toolId = hash.substring(1); 
         const targetButton = document.querySelector(`[data-tool="${toolId}"]`);
-        
+
         if (targetButton) {
-            // Simulate a click on the navigation button to activate the tool panel
             targetButton.click();
-            // Scroll to the main tool area for better UX
             document.getElementById('select-area').scrollIntoView({ behavior: 'smooth' });
         }
     }
@@ -108,16 +103,14 @@ function checkURLHash() {
 
 
 // =========================================================
-// FILE UPLOAD AND DRAG-DROP LOGIC
+// FILE UPLOAD AND THUMBNAIL LOGIC
 // =========================================================
 
-// Handle file selection from input
 function handleFileSelect(event) {
     const files = Array.from(event.target.files);
     addFilesToState(files);
 }
 
-// Handle file drop
 function handleDrop(event) {
     event.preventDefault();
     dropArea.classList.remove('dragover');
@@ -125,16 +118,16 @@ function handleDrop(event) {
     addFilesToState(files);
 }
 
-// Add files to the global state and display thumbnails
 function addFilesToState(files) {
     if (state.isProcessing) return;
-    
-    // Filter out non-image files if needed
+
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
 
-    if (imageFiles.length === 0) return;
+    if (imageFiles.length === 0) {
+        showNotification("Please select image files (JPG, PNG, WebP).", 'error', 4000);
+        return;
+    }
 
-    // Reset current files if new ones are uploaded
     if (state.files.length === 0) {
         state.files = [];
         thumbGrid.innerHTML = '';
@@ -142,7 +135,6 @@ function addFilesToState(files) {
     }
 
     imageFiles.forEach(file => {
-        // Create an entry in the state for the new file
         state.files.push({
             originalFile: file,
             filename: file.name,
@@ -152,7 +144,6 @@ function addFilesToState(files) {
             status: 'Ready',
         });
 
-        // Use FileReader to read file for thumbnail preview
         const reader = new FileReader();
         reader.onload = (e) => {
             displayThumbnail(file.name, e.target.result, file.size);
@@ -161,11 +152,10 @@ function addFilesToState(files) {
     });
 }
 
-// Display file thumbnail and info
 function displayThumbnail(filename, dataURL, size) {
     const item = document.createElement('div');
     item.className = 'thumb-item';
-    item.dataset.filename = filename; // Link thumbnail to file object
+    item.dataset.filename = filename;
 
     const img = document.createElement('img');
     img.className = 'thumb-img';
@@ -191,7 +181,8 @@ resetBtn.addEventListener('click', () => {
     state.files = [];
     thumbGrid.innerHTML = '';
     thumbsArea.classList.add('hidden');
-    fileInput.value = ''; // Clear file input
+    fileInput.value = '';
+    showNotification("Image selection cleared. Ready for new upload.", 'success');
 });
 
 
@@ -211,10 +202,9 @@ fileInput.addEventListener('change', handleFileSelect);
 
 
 // =========================================================
-// CORE IMAGE PROCESSING FUNCTIONS (Canvas API)
+// CORE IMAGE PROCESSING & UTILITIES
 // =========================================================
 
-// Utility to load image and get canvas context
 function loadImage(file) {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -234,19 +224,76 @@ function loadImage(file) {
     });
 }
 
-// Utility to convert canvas to Blob
 function canvasToBlob(canvas, mimeType, quality) {
     return new Promise(resolve => {
-        // Use p5.js/canvas default for PNG (quality ignored), or quality for JPG/WEBP
         canvas.toBlob(resolve, mimeType, quality); 
     });
 }
 
-// Function to process a single file based on tool (placeholder, actual logic defined below)
+function updateThumbnailStatus(filename, statusText) {
+    const thumbItem = document.querySelector(`.thumb-item[data-filename="${filename}"]`);
+    if (thumbItem) {
+        const statusSpan = thumbItem.querySelector('.thumb-status');
+        statusSpan.textContent = statusText;
+        if (statusText.includes('DONE')) {
+             statusSpan.style.color = 'green';
+        } else if (statusText === 'ERROR') {
+             statusSpan.style.color = 'red';
+        } else {
+             statusSpan.style.color = 'var(--accent)';
+        }
+    }
+}
+
+function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+// NEW: Toast Notification Handler
+function showNotification(message, type = 'success', duration = 3000) {
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${type}`;
+    toast.textContent = message;
+
+    notificationContainer.appendChild(toast);
+    void toast.offsetWidth; 
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.parentElement.removeChild(toast);
+            }
+        }, 300);
+    }, duration);
+}
+
+// NEW: Updated Download Batch
+function downloadBatch(blobs, filenames) {
+    showNotification(`${blobs.length} image(s) downloaded successfully!`, 'success');
+
+    // In a real app, you would use a library like JSZip here.
+    blobs.forEach((blob, index) => {
+        downloadBlob(blob, filenames[index]);
+    });
+}
+
+
+// =========================================================
+// MAIN PROCESSING FUNCTION (CLEANED)
+// =========================================================
 async function processFile(fileEntry, toolType, options = {}) {
     try {
         const { img, canvas, ctx } = await loadImage(fileEntry.originalFile);
-        
+
         let targetWidth = img.width;
         let targetHeight = img.height;
         let mimeType = fileEntry.originalFile.type;
@@ -255,9 +302,8 @@ async function processFile(fileEntry, toolType, options = {}) {
         // Apply tool-specific transformations
         if (toolType === 'compress') {
             quality = options.quality / 100;
-            mimeType = 'image/jpeg'; // Usually compression is best with JPG
+            mimeType = 'image/jpeg';
         } else if (toolType === 'px') {
-            // ... (Pixel resize logic, maintaining aspect ratio if needed)
             targetWidth = options.width;
             targetHeight = options.height;
             if (options.keepAspect) {
@@ -271,10 +317,10 @@ async function processFile(fileEntry, toolType, options = {}) {
                 quality = 0.9;
             }
         } else if (toolType === 'passport') {
-             // 35x45mm at 300 DPI is 413x531 pixels
+             // Passport size 413x531 pixels
              targetWidth = 413;
              targetHeight = 531;
-             // Simple centering crop logic (for demo)
+             
              const scale = Math.max(targetWidth / img.width, targetHeight / img.height);
              const x = (targetWidth / 2) - (img.width / 2) * scale;
              const y = (targetHeight / 2) - (img.height / 2) * scale;
@@ -283,10 +329,6 @@ async function processFile(fileEntry, toolType, options = {}) {
              canvas.height = targetHeight;
              ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
 
-        } else if (toolType === 'kb') {
-            // KB Reducer is complex and requires iterative processing (see below for actual implementation)
-            // For general processing:
-            quality = 0.7; // Start with a default quality
         }
 
         if (toolType !== 'passport') {
@@ -302,19 +344,14 @@ async function processFile(fileEntry, toolType, options = {}) {
         if (toolType === 'kb' && options.targetSizeKB > 0) {
              const targetBytes = options.targetSizeKB * 1024;
              let currentQuality = 90; 
-             
-             // First attempt with lower quality (or the processed blob if coming from another tool)
              let currentBlob = blob;
 
-             // Iteratively reduce quality until target size is met or quality is too low
              while (currentBlob.size > targetBytes && currentQuality > 10) {
-                 currentQuality -= 5; // Decrease quality by 5%
+                 currentQuality -= 5;
                  currentBlob = await canvasToBlob(canvas, 'image/jpeg', currentQuality / 100);
              }
              
-             // If size is still too big, scale down the image (final attempt)
              if (currentBlob.size > targetBytes) {
-                 // Simple reduction: scale canvas to 80% and re-attempt blob conversion
                  canvas.width *= 0.8;
                  canvas.height *= 0.8;
                  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -333,49 +370,13 @@ async function processFile(fileEntry, toolType, options = {}) {
         return blob;
 
     } catch (error) {
+        // NEW: Error handling with Toast Notification
         console.error("Error processing file:", error);
         fileEntry.status = 'ERROR';
         updateThumbnailStatus(fileEntry.filename, 'ERROR');
+        showNotification(`Error: Could not process ${fileEntry.filename}.`, 'error', 5000);
         return null;
     }
-}
-
-// Utility to update thumbnail status
-function updateThumbnailStatus(filename, statusText) {
-    const thumbItem = document.querySelector(`.thumb-item[data-filename="${filename}"]`);
-    if (thumbItem) {
-        const statusSpan = thumbItem.querySelector('.thumb-status');
-        statusSpan.textContent = statusText;
-        if (statusText.includes('DONE')) {
-             statusSpan.style.color = 'green';
-        } else if (statusText === 'ERROR') {
-             statusSpan.style.color = 'red';
-        } else {
-             statusSpan.style.color = 'var(--accent)';
-        }
-    }
-}
-
-// Utility to download a single file
-function downloadBlob(blob, filename, mimeType) {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-}
-
-// Utility to download all files in a zip (placeholder for simplicity)
-function downloadBatch(blobs, filenames) {
-    alert("Batch download complete! (If this were a production app, it would download a ZIP file)");
-    // In a real app, you would use a library like JSZip here.
-    // For now, we will download them sequentially if a single tool is run.
-    blobs.forEach((blob, index) => {
-        downloadBlob(blob, filenames[index]);
-    });
 }
 
 
@@ -383,24 +384,25 @@ function downloadBatch(blobs, filenames) {
 // TOOL ACTION HANDLERS
 // =========================================================
 
-// Wrapper for all tool actions
 async function runTool(toolType, options = {}) {
-    if (state.files.length === 0 || state.isProcessing) return;
-    
+    if (state.files.length === 0 || state.isProcessing) {
+        showNotification("Please select images first to run the tool.", 'error', 4000);
+        return;
+    }
+
     state.isProcessing = true;
-    
+
     const processedBlobs = [];
     const processedFilenames = [];
-    
+
     for (const fileEntry of state.files) {
         updateThumbnailStatus(fileEntry.filename, 'Processing...');
-        
+
         const blob = await processFile(fileEntry, toolType, options);
-        
+
         if (blob) {
             processedBlobs.push(blob);
-            
-            // Determine new filename extension
+
             let newExt = 'jpg';
             if (toolType === 'convert') {
                 newExt = options.format.split('/')[1];
@@ -409,14 +411,14 @@ async function runTool(toolType, options = {}) {
             } else if (blob.type === 'image/webp') {
                  newExt = 'webp';
             }
-            
+
             const originalNameWithoutExt = fileEntry.filename.split('.').slice(0, -1).join('.');
             processedFilenames.push(`${originalNameWithoutExt}-quickpic.${newExt}`);
         }
     }
 
     state.isProcessing = false;
-    
+
     if (processedBlobs.length > 0 && toolType !== 'pdf') {
         downloadBatch(processedBlobs, processedFilenames);
     }
@@ -426,7 +428,7 @@ async function runTool(toolType, options = {}) {
 runKbBtn.addEventListener('click', () => {
     const targetSizeKB = parseInt(targetSizeInput.value);
     if (isNaN(targetSizeKB) || targetSizeKB <= 0) {
-        alert("Please enter a valid target size in KB.");
+        showNotification("Please enter a valid target size in KB.", 'error', 4000);
         return;
     }
     runTool('kb', { targetSizeKB });
@@ -438,7 +440,7 @@ runPxBtn.addEventListener('click', () => {
     const width = parseInt(widthPxInput.value);
     const height = parseInt(heightPxInput.value);
     if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
-        alert("Please enter valid width and height in pixels.");
+        showNotification("Please enter valid width and height in pixels.", 'error', 4000);
         return;
     }
     const keepAspect = keepAspectCheckbox.checked;
@@ -465,79 +467,91 @@ runConvertBtn.addEventListener('click', () => {
 
 // --- Passport Handler ---
 runPassportBtn.addEventListener('click', () => {
-    // Passport size is hardcoded as 413x531 (35x45mm @ 300dpi)
     runTool('passport');
 });
 
 
 // --- PDF Handlers ---
 async function runPDF(merge) {
-    if (state.files.length === 0 || state.isProcessing) return;
+    if (state.files.length === 0 || state.isProcessing) {
+        showNotification("Please select images first to create PDF.", 'error', 4000);
+        return;
+    }
     state.isProcessing = true;
-    
-    const pdfBlobs = [];
-    
+
+    // Use a placeholder for pdfBlobs to keep the structure simple, 
+    // though pdf generation handles download immediately.
+
     if (merge) {
         // MERGE: Create a single PDF with all images
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF();
-        
-        for (let i = 0; i < state.files.length; i++) {
-            const fileEntry = state.files[i];
-            updateThumbnailStatus(fileEntry.filename, 'Adding to PDF...');
 
-            const { img, canvas, ctx } = await loadImage(fileEntry.originalFile);
-            const imgData = canvas.toDataURL('image/jpeg', 0.9);
-            
-            if (i > 0) pdf.addPage();
-            
-            // Calculate dimensions to fit page
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
-            const w = img.width * ratio;
-            const h = img.height * ratio;
-            const x = (pageWidth - w) / 2;
-            const y = (pageHeight - h) / 2;
-            
-            pdf.addImage(imgData, 'JPEG', x, y, w, h);
-            fileEntry.status = `Added to PDF`;
-            updateThumbnailStatus(fileEntry.filename, fileEntry.status);
+        try {
+             for (let i = 0; i < state.files.length; i++) {
+                const fileEntry = state.files[i];
+                updateThumbnailStatus(fileEntry.filename, 'Adding to PDF...');
+
+                const { img, canvas } = await loadImage(fileEntry.originalFile);
+                const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                
+                if (i > 0) pdf.addPage();
+                
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
+                const w = img.width * ratio;
+                const h = img.height * ratio;
+                const x = (pageWidth - w) / 2;
+                const y = (pageHeight - h) / 2;
+                
+                pdf.addImage(imgData, 'JPEG', x, y, w, h);
+                fileEntry.status = `Added to PDF`;
+                updateThumbnailStatus(fileEntry.filename, fileEntry.status);
+            }
+
+            const pdfBlob = pdf.output('blob');
+            downloadBlob(pdfBlob, 'QuickPic-Merged.pdf');
+            showNotification("Successfully merged images into a single PDF!", 'success');
+
+        } catch (error) {
+             console.error("PDF Merge Error:", error);
+             showNotification("Error during PDF merging.", 'error', 5000);
         }
-
-        const pdfBlob = pdf.output('blob');
-        downloadBlob(pdfBlob, 'QuickPic-Merged.pdf', 'application/pdf');
 
     } else {
         // SEPARATE: Create one PDF per image
-        for (const fileEntry of state.files) {
-            updateThumbnailStatus(fileEntry.filename, 'Creating PDF...');
-            
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
-            const { img, canvas, ctx } = await loadImage(fileEntry.originalFile);
-            const imgData = canvas.toDataURL('image/jpeg', 0.9);
-            
-            // Add image to PDF
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
-            const w = img.width * ratio;
-            const h = img.height * ratio;
-            const x = (pageWidth - w) / 2;
-            const y = (pageHeight - h) / 2;
-            
-            pdf.addImage(imgData, 'JPEG', x, y, w, h);
-            
-            const pdfBlob = pdf.output('blob');
-            pdfBlobs.push(pdfBlob);
-            
-            fileEntry.status = `PDF Ready`;
-            updateThumbnailStatus(fileEntry.filename, fileEntry.status);
-            
-            // Download immediately for separate mode
-            const originalNameWithoutExt = fileEntry.filename.split('.').slice(0, -1).join('.');
-            downloadBlob(pdfBlob, `${originalNameWithoutExt}-quickpic.pdf`, 'application/pdf');
+        try {
+             for (const fileEntry of state.files) {
+                updateThumbnailStatus(fileEntry.filename, 'Creating PDF...');
+                
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+                const { img, canvas } = await loadImage(fileEntry.originalFile);
+                const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
+                const w = img.width * ratio;
+                const h = img.height * ratio;
+                const x = (pageWidth - w) / 2;
+                const y = (pageHeight - h) / 2;
+                
+                pdf.addImage(imgData, 'JPEG', x, y, w, h);
+                
+                const pdfBlob = pdf.output('blob');
+                
+                fileEntry.status = `PDF Ready`;
+                updateThumbnailStatus(fileEntry.filename, fileEntry.status);
+                
+                const originalNameWithoutExt = fileEntry.filename.split('.').slice(0, -1).join('.');
+                downloadBlob(pdfBlob, `${originalNameWithoutExt}-quickpic.pdf`);
+            }
+            showNotification("Successfully exported all images as separate PDFs!", 'success');
+        } catch (error) {
+             console.error("PDF Separate Error:", error);
+             showNotification("Error during PDF export.", 'error', 5000);
         }
     }
 
@@ -552,92 +566,8 @@ runPdfSeparateBtn.addEventListener('click', () => runPDF(false));
 // INITIALIZATION
 // =========================================================
 
-// =========================================================
-// NEW: TOAST NOTIFICATION HANDLER
-// =========================================================
-
-const notificationContainer = document.getElementById('notification-container');
-
-/**
- * Displays a toast notification on the screen.
- * @param {string} message - The message to display.
- * @param {string} type - 'success' (green) or 'error' (red).
- * @param {number} duration - Time in milliseconds to show the notification.
- */
-function showNotification(message, type = 'success', duration = 3000) {
-    const toast = document.createElement('div');
-    toast.className = `toast-notification ${type}`;
-    toast.textContent = message;
-
-    notificationContainer.appendChild(toast);
-
-    // Force reflow to ensure the transition plays
-    void toast.offsetWidth; 
-
-    // Add 'show' class to slide the toast in
-    toast.classList.add('show');
-
-    // Automatically hide the notification after the duration
-    setTimeout(() => {
-        toast.classList.remove('show');
-        
-        // Wait for the slide-out transition to finish before removing from DOM
-        setTimeout(() => {
-            if (toast.parentElement) {
-                toast.parentElement.removeChild(toast);
-            }
-        }, 300); // Should match the CSS transition time
-    }, duration);
-}
-
-
-// =========================================================
-// INTEGRATION: Download/Error Notification Updates
-// =========================================================
-
-// अब आपको अपनी पुरानी 'downloadBatch' और 'processFile' के एरर हैंडलिंग को अपडेट करना होगा।
-
-// 1. 'processFile' के Catch Block को बदलें (लगभग लाइन 345)
-// OLD:
-// } catch (error) {
-//     console.error("Error processing file:", error);
-//     fileEntry.status = 'ERROR';
-//     updateThumbnailStatus(fileEntry.filename, 'ERROR');
-//     return null;
-// }
-
-// NEW CATCH BLOCK:
-} catch (error) {
-    console.error("Error processing file:", error);
-    fileEntry.status = 'ERROR';
-    updateThumbnailStatus(fileEntry.filename, 'ERROR');
-    // Show Red Box Notification:
-    showNotification(`Error: Could not process ${fileEntry.filename}.`, 'error', 5000);
-    return null;
-}
-
-
-// 2. 'downloadBatch' फ़ंक्शन को बदलें (लगभग लाइन 400)
-// OLD:
-// function downloadBatch(blobs, filenames) {
-//     alert("Batch download complete!..."); // OLD ALERT
-//     // ... download logic ...
-// }
-
-// NEW DOWNLOAD BATCH FUNCTION:
-function downloadBatch(blobs, filenames) {
-    // Show Green Box Notification:
-    showNotification(`${blobs.length} image(s) downloaded successfully!`, 'success');
-    
-    blobs.forEach((blob, index) => {
-        downloadBlob(blob, filenames[index]);
-    });
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    // Check if there is a hash in the URL for deep linking
     checkURLHash();
 });
 
-// Call checkURLHash on load (essential for the deep linking fix)
 window.addEventListener('load', checkURLHash);

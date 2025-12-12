@@ -71,21 +71,52 @@ function switchTool(toolId) {
     });
 }
 
-// Event listeners for navigation buttons (FINAL FIX: NO SCROLLING)
+// Event listeners for navigation buttons (FINAL FIX: SEO & UX)
 navButtons.forEach(btn => {
     btn.addEventListener('click', (e) => { 
-        e.preventDefault(); // सुनिश्चित करें कि कोई डिफ़ॉल्ट HTML व्यवहार (जैसे स्क्रॉलिंग) न हो
+        e.preventDefault(); 
         const toolId = btn.getAttribute('data-tool');
 
         // 1. केवल टूल को स्विच करें
         switchTool(toolId); 
 
-        // 2. URL में हैश अपडेट करें (SEO के लिए ज़रूरी)
-        window.location.hash = toolId; 
-
-        // 3. कोई स्क्रॉल कमांड नहीं!
+        // 2. Hash को अपडेट करें (SEO के लिए ज़रूरी)
+        // यह लाइन पेज को स्क्रॉल करने की कोशिश कर सकती है, 
+        // इसलिए हम `pushState` का उपयोग करके इसे और साफ बनाएंगे
+        
+        // 🚨 यह सबसे महत्वपूर्ण बदलाव है:
+        // history.pushState से Hash अपडेट करें, 
+        // जो ब्राउज़र को स्क्रॉल करने से रोकता है।
+        history.pushState(null, null, '#' + toolId);
+        
+        // 3. कोई स्क्रॉल कमांड नहीं! (अब यह 100% नहीं होगा)
     });
 });
+
+
+// Content links के लिए भी यही करें (यह पहले से ही सही था, लेकिन फिर से पुष्टि करें)
+document.querySelectorAll('[data-tool-link]').forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const toolId = link.getAttribute('data-tool-link');
+        switchTool(toolId);
+        
+        // 🚨 Content Link के लिए भी history.pushState का उपयोग करें
+        history.pushState(null, null, '#' + toolId);
+    });
+});
+
+
+// Initialization: Deep Linking के लिए Hash चेक करें
+function checkURLHash() {
+    const hash = window.location.hash;
+    if (hash) {
+        const toolId = hash.substring(1); 
+        switchTool(toolId); 
+    }
+    // अगर hash नहीं है, तो डिफ़ॉल्ट टूल 'tool-kb' पहले ही लोड हो जाएगा।
+    // पेज लोड पर कोई स्क्रॉलिंग नहीं होगी, क्योंकि हमने scrollIntoView हटा दिया है।
+}
 
 
 // Functionality to switch tools based on content links (SCROLLING REMOVED)

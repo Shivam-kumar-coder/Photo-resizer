@@ -49,7 +49,7 @@ const notificationContainer = document.getElementById('notification-container');
 
 
 // =========================================================
-// UI SWITCHING & DEEP LINKING LOGIC
+// UI SWITCHING & DEEP LINKING LOGIC (SCROLLING REMOVED)
 // =========================================================
 
 // Function to switch tool panels and update navigation
@@ -73,33 +73,32 @@ function switchTool(toolId) {
 
 // Event listeners for navigation buttons (FINAL FIX: NO SCROLLING)
 navButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => { // (e) इवेंट ऑब्जेक्ट डालें
+    btn.addEventListener('click', (e) => { 
         e.preventDefault(); // सुनिश्चित करें कि कोई डिफ़ॉल्ट HTML व्यवहार (जैसे स्क्रॉलिंग) न हो
         const toolId = btn.getAttribute('data-tool');
-        
+
         // 1. केवल टूल को स्विच करें
         switchTool(toolId); 
-        
+
         // 2. URL में हैश अपडेट करें (SEO के लिए ज़रूरी)
         window.location.hash = toolId; 
-        
+
         // 3. कोई स्क्रॉल कमांड नहीं!
     });
 });
 
 
-// Functionality to switch tools based on content links
+// Functionality to switch tools based on content links (SCROLLING REMOVED)
 document.querySelectorAll('[data-tool-link]').forEach(link => {
     link.addEventListener('click', (e) => {
         e.preventDefault();
         const toolId = link.getAttribute('data-tool-link');
         switchTool(toolId);
         window.location.hash = toolId;
-        
-        // --- SCROLLING LOGIC REMOVED FROM HERE ---
+
+        // SCROLLING REMOVED FROM HERE
     });
 });
-
 
 
 // Checks URL Hash on Load (Deep Linking Fix) - SCROLLING REMOVED
@@ -107,13 +106,12 @@ function checkURLHash() {
     const hash = window.location.hash;
     if (hash) {
         const toolId = hash.substring(1); 
-        
-        // सीधे switchTool कॉल करें, ताकि कोई क्लिक इवेंट स्क्रॉलिंग न करे
+
+        // सीधे switchTool कॉल करें
         switchTool(toolId); 
     }
     // अगर hash नहीं है, तो डिफ़ॉल्ट टूल 'tool-kb' पहले ही लोड हो जाएगा।
 }
-
 
 
 // =========================================================
@@ -375,7 +373,7 @@ async function processFile(fileEntry, toolType, options = {}) {
                  canvas.width = img.width * 0.8;
                  canvas.height = img.height * 0.8;
                  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                 
+
                  // Try one more time with lower dimension and fixed quality (e.g., 80)
                  currentBlob = await canvasToBlob(canvas, 'image/jpeg', 0.8);
                  showNotification("KB target difficult to reach, reducing image dimensions by 20%.", 'warning', 5000);
@@ -526,7 +524,7 @@ async function runPDF(merge) {
                 canvas.width = img.width;
                 canvas.height = img.height;
                 canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
-                
+
                 const imgData = canvas.toDataURL('image/jpeg', 0.9);
 
                 if (i > 0) pdf.addPage();
@@ -563,7 +561,7 @@ async function runPDF(merge) {
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF();
                 const { img, canvas } = await loadImage(fileEntry.originalFile);
-                
+
                 // Draw image on canvas without scaling/resizing just for DataURL capture
                 canvas.width = img.width;
                 canvas.height = img.height;

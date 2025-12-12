@@ -82,15 +82,18 @@ navButtons.forEach(btn => {
     });
 });
 
-// Functionality to switch tools based on content links (Hash Update already present here)
+// Functionality to switch tools based on content links
 document.querySelectorAll('[data-tool-link]').forEach(link => {
     link.addEventListener('click', (e) => {
         e.preventDefault();
         const toolId = link.getAttribute('data-tool-link');
         switchTool(toolId);
         window.location.hash = toolId;
+        
+        // --- SCROLLING LOGIC REMOVED FROM HERE ---
     });
 });
+
 
 
 // Checks URL Hash on Load (Deep Linking Fix) - SCROLLING REMOVED

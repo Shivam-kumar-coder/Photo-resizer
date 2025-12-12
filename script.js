@@ -41,7 +41,7 @@ const runConvertBtn = document.getElementById('runConvert');
 const runPdfMergeBtn = document.getElementById('runPdfMerge');
 const runPdfSeparateBtn = document.getElementById('runPdfSeparate');
 
-// Passport Element (assuming you have a runPassportBtn in index.html)
+// Passport Element 
 const runPassportBtn = document.getElementById('runPassport'); 
 
 // NEW: Notification Container
@@ -49,7 +49,7 @@ const notificationContainer = document.getElementById('notification-container');
 
 
 // =========================================================
-// UI SWITCHING & DEEP LINKING LOGIC (SCROLLING REMOVED)
+// UI SWITCHING & DEEP LINKING LOGIC (FINAL, SCROLLING REMOVED)
 // =========================================================
 
 // Function to switch tool panels and update navigation
@@ -71,77 +71,42 @@ function switchTool(toolId) {
     });
 }
 
-// Event listeners for navigation buttons (FINAL FIX: SEO & UX)
+// 🚀 Navigation Buttons Listener: Updates Hash without scrolling
 navButtons.forEach(btn => {
     btn.addEventListener('click', (e) => { 
         e.preventDefault(); 
         const toolId = btn.getAttribute('data-tool');
 
-        // 1. केवल टूल को स्विच करें
         switchTool(toolId); 
-
-        // 2. Hash को अपडेट करें (SEO के लिए ज़रूरी)
-        // यह लाइन पेज को स्क्रॉल करने की कोशिश कर सकती है, 
-        // इसलिए हम `pushState` का उपयोग करके इसे और साफ बनाएंगे
         
-        // 🚨 यह सबसे महत्वपूर्ण बदलाव है:
-        // history.pushState से Hash अपडेट करें, 
-        // जो ब्राउज़र को स्क्रॉल करने से रोकता है।
+        // 🚨 FINAL FIX: Hash update for SEO, but using pushState to prevent scroll
         history.pushState(null, null, '#' + toolId);
-        
-        // 3. कोई स्क्रॉल कमांड नहीं! (अब यह 100% नहीं होगा)
     });
 });
 
 
-// Content links के लिए भी यही करें (यह पहले से ही सही था, लेकिन फिर से पुष्टि करें)
+// 🔗 Content Links Listener: Updates Hash without scrolling
 document.querySelectorAll('[data-tool-link]').forEach(link => {
     link.addEventListener('click', (e) => {
         e.preventDefault();
         const toolId = link.getAttribute('data-tool-link');
+        
         switchTool(toolId);
         
-        // 🚨 Content Link के लिए भी history.pushState का उपयोग करें
+        // 🚨 FINAL FIX: Hash update for SEO, but using pushState to prevent scroll
         history.pushState(null, null, '#' + toolId);
     });
 });
 
 
-// Initialization: Deep Linking के लिए Hash चेक करें
+// 🌐 Initialization: Checks URL Hash on Load (Deep Linking Fix)
 function checkURLHash() {
     const hash = window.location.hash;
     if (hash) {
         const toolId = hash.substring(1); 
         switchTool(toolId); 
     }
-    // अगर hash नहीं है, तो डिफ़ॉल्ट टूल 'tool-kb' पहले ही लोड हो जाएगा।
-    // पेज लोड पर कोई स्क्रॉलिंग नहीं होगी, क्योंकि हमने scrollIntoView हटा दिया है।
-}
-
-
-// Functionality to switch tools based on content links (SCROLLING REMOVED)
-document.querySelectorAll('[data-tool-link]').forEach(link => {
-    link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const toolId = link.getAttribute('data-tool-link');
-        switchTool(toolId);
-        window.location.hash = toolId;
-
-        // SCROLLING REMOVED FROM HERE
-    });
-});
-
-
-// Checks URL Hash on Load (Deep Linking Fix) - SCROLLING REMOVED
-function checkURLHash() {
-    const hash = window.location.hash;
-    if (hash) {
-        const toolId = hash.substring(1); 
-
-        // सीधे switchTool कॉल करें
-        switchTool(toolId); 
-    }
-    // अगर hash नहीं है, तो डिफ़ॉल्ट टूल 'tool-kb' पहले ही लोड हो जाएगा।
+    // No scroll command needed here.
 }
 
 
@@ -435,7 +400,6 @@ async function processFile(fileEntry, toolType, options = {}) {
 // =========================================================
 // TOOL ACTION HANDLERS
 // =========================================================
-
 async function runTool(toolType, options = {}) {
     if (state.files.length === 0 || state.isProcessing) {
         showNotification("Please select images first to run the tool.", 'error', 4000);
@@ -457,8 +421,8 @@ async function runTool(toolType, options = {}) {
 
             let newExt = 'jpg';
             if (toolType === 'convert') {
-                // Get extension from mime type (image/jpeg -> jpeg)
-                newExt = options.format.split('/')[1];
+                // Get extension from mime type (image/jpeg -> jpg)
+                newExt = options.format.split('/')[1].replace('jpeg', 'jpg'); 
             } else if (blob.type === 'image/png') {
                  newExt = 'png';
             } else if (blob.type === 'image/webp') {
@@ -521,7 +485,7 @@ runConvertBtn.addEventListener('click', () => {
     runTool('convert', { format });
 });
 
-// --- Passport Handler (FIXED: Event Listener Added) ---
+// --- Passport Handler ---
 if (runPassportBtn) {
     runPassportBtn.addEventListener('click', () => {
         runTool('passport');
@@ -536,9 +500,6 @@ async function runPDF(merge) {
         return;
     }
     state.isProcessing = true;
-
-    // Use a placeholder for pdfBlobs to keep the structure simple, 
-    // though pdf generation handles download immediately.
 
     if (merge) {
         // MERGE: Create a single PDF with all images
@@ -625,6 +586,14 @@ async function runPDF(merge) {
         }
     }
 
+    // Reset status of all files that were not updated to DONE/ERROR/PDF Ready
+    state.files.forEach(fileEntry => {
+        if (fileEntry.status.includes('Adding to PDF') || fileEntry.status === 'Creating PDF...') {
+            fileEntry.status = 'Ready';
+            updateThumbnailStatus(fileEntry.filename, 'Ready');
+        }
+    });
+
     state.isProcessing = false;
 }
 
@@ -639,5 +608,4 @@ runPdfSeparateBtn.addEventListener('click', () => runPDF(false));
 document.addEventListener('DOMContentLoaded', () => {
     checkURLHash();
 });
-
-window.addEventListener('load', checkURLHash);
+// window.addEventListener('load', checkURLHash); - DOMContentLoaded is sufficient 

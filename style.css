@@ -221,25 +221,80 @@ input[type="number"], select {
 }
 
 /* ========================================================
-   TOOL PANELS AND ROWS
+   TOOL PANELS AND ROWS - FINAL FIX FOR SCROLLING/LAYOUT
    ======================================================== */
+.tools {
+    /* FIX 1: Parent container ko relative banayein */
+    position: relative; 
+    
+    /* FIX 2: Sabse bade tool panel ki unchai ke hisaab se height dein.
+       (Isse neeche ka SEO content upar nahi khisakega) */
+    min-height: 250px; /* लेआउट शिफ्ट रोकने के लिए ज़रूरी */
+    
+    margin-bottom: 40px; 
+    padding-bottom: 20px;
+}
+
 .tool-panel {
-    /* FIX 3: Remove from document flow to prevent layout shifting */
+    /* FIX 3: Element ko document flow se hataein */
     position: absolute; 
     top: 0;
     left: 0;
     width: 100%; 
-    z-index: 10; /* Make sure it appears above other elements if any */
+    z-index: 10; 
     
-    /* Original display control */
     display: none;
     animation: fadeIn 0.3s;
 }
 
 .tool-panel.visible {
+    /* अब यह absolute होने के बावजूद दिखाई देगा और लेआउट को डिस्टर्ब नहीं करेगा */
     display: block;
 }
- ========================================================
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.row > input[type="number"], .row > select {
+    flex-grow: 1;
+}
+
+.row > button {
+    flex-shrink: 0;
+}
+
+.hint {
+    font-size: 0.9em;
+    color: #6c757d;
+    margin-top: -10px;
+    margin-bottom: 15px;
+}
+
+.muted {
+    font-size: 0.9em;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Responsive row adjustments */
+@media (max-width: 600px) {
+    .row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .row > input, .row > select, .row > button {
+        width: 100%;
+        margin-right: 0;
+    }
+}
+
+/* ========================================================
    THUMBNAIL AREA
    ======================================================== */
 .thumbs {
@@ -295,7 +350,7 @@ input[type="number"], select {
    SEO CONTENT AND FOOTER
    ======================================================== */
 .seo-content-ux {
-    /* FIX: Ensures space above the content section */
+    /* Ensures space above the content section */
     padding-top: 40px !important; 
 }
 

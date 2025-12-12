@@ -223,13 +223,15 @@ input[type="number"], select {
 /* ========================================================
    TOOL PANELS AND ROWS
    ======================================================== */
-.tools {
-    /* FIX: Added margin for space between buttons and content */
-    margin-bottom: 40px; 
-    padding-bottom: 20px;
-}
-
 .tool-panel {
+    /* FIX 3: Remove from document flow to prevent layout shifting */
+    position: absolute; 
+    top: 0;
+    left: 0;
+    width: 100%; 
+    z-index: 10; /* Make sure it appears above other elements if any */
+    
+    /* Original display control */
     display: none;
     animation: fadeIn 0.3s;
 }
@@ -237,50 +239,7 @@ input[type="number"], select {
 .tool-panel.visible {
     display: block;
 }
-
-.row {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 15px;
-}
-
-.row > input[type="number"], .row > select {
-    flex-grow: 1;
-}
-
-.row > button {
-    flex-shrink: 0;
-}
-
-.hint {
-    font-size: 0.9em;
-    color: #6c757d;
-    margin-top: -10px;
-    margin-bottom: 15px;
-}
-
-.muted {
-    font-size: 0.9em;
-    color: #6c757d;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-/* Responsive row adjustments */
-@media (max-width: 600px) {
-    .row {
-        flex-direction: column;
-        gap: 10px;
-    }
-    .row > input, .row > select, .row > button {
-        width: 100%;
-        margin-right: 0;
-    }
-}
-
-/* ========================================================
+ ========================================================
    THUMBNAIL AREA
    ======================================================== */
 .thumbs {

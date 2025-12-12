@@ -41,6 +41,9 @@ const runConvertBtn = document.getElementById('runConvert');
 const runPdfMergeBtn = document.getElementById('runPdfMerge');
 const runPdfSeparateBtn = document.getElementById('runPdfSeparate');
 
+// Passport Element (assuming you have a runPassportBtn in index.html)
+const runPassportBtn = document.getElementById('runPassport'); 
+
 // NEW: Notification Container
 const notificationContainer = document.getElementById('notification-container');
 
@@ -68,15 +71,18 @@ function switchTool(toolId) {
     });
 }
 
-// Event listeners for navigation buttons
+// Event listeners for navigation buttons (FIXED: Added Hash Update)
 navButtons.forEach(btn => {
     btn.addEventListener('click', () => {
         const toolId = btn.getAttribute('data-tool');
         switchTool(toolId);
+        // --- FIX: Add hash update for main navigation buttons ---
+        window.location.hash = toolId; 
+        // -------------------------------------------------------
     });
 });
 
-// Functionality to switch tools based on content links
+// Functionality to switch tools based on content links (Hash Update already present here)
 document.querySelectorAll('[data-tool-link]').forEach(link => {
     link.addEventListener('click', (e) => {
         e.preventDefault();
@@ -317,14 +323,14 @@ async function processFile(fileEntry, toolType, options = {}) {
                 quality = 0.9;
             }
         } else if (toolType === 'passport') {
-             // Passport size 413x531 pixels
+             // Passport size 413x531 pixels (standard Indian 3.5x4.5 cm at 300 DPI)
              targetWidth = 413;
              targetHeight = 531;
-             
+
              const scale = Math.max(targetWidth / img.width, targetHeight / img.height);
              const x = (targetWidth / 2) - (img.width / 2) * scale;
              const y = (targetHeight / 2) - (img.height / 2) * scale;
-             
+
              canvas.width = targetWidth;
              canvas.height = targetHeight;
              ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
@@ -337,7 +343,7 @@ async function processFile(fileEntry, toolType, options = {}) {
              ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
         }
 
-        
+
         let blob = await canvasToBlob(canvas, mimeType, quality);
 
         // --- KB REDUCER: Iterative Logic ---
@@ -345,19 +351,28 @@ async function processFile(fileEntry, toolType, options = {}) {
              const targetBytes = options.targetSizeKB * 1024;
              let currentQuality = 90; 
              let currentBlob = blob;
+             let iterationCount = 0; // Prevent infinite loop
 
-             while (currentBlob.size > targetBytes && currentQuality > 10) {
+             // Step 1: Reduce quality
+             while (currentBlob.size > targetBytes && currentQuality > 10 && iterationCount < 20) {
                  currentQuality -= 5;
-                 currentBlob = await canvasToBlob(canvas, 'image/jpeg', currentQuality / 100);
+                 // Note: We use the original canvas from loadImage
+                 currentBlob = await canvasToBlob(canvas, 'image/jpeg', currentQuality / 100); 
+                 iterationCount++;
              }
-             
+
+             // Step 2: Reduce dimensions if quality reduction failed to reach target
              if (currentBlob.size > targetBytes) {
-                 canvas.width *= 0.8;
-                 canvas.height *= 0.8;
+                 // Reset canvas/context using original image for clean scaling
+                 canvas.width = img.width * 0.8;
+                 canvas.height = img.height * 0.8;
                  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                 
+                 // Try one more time with lower dimension and fixed quality (e.g., 80)
                  currentBlob = await canvasToBlob(canvas, 'image/jpeg', 0.8);
+                 showNotification("KB target difficult to reach, reducing image dimensions by 20%.", 'warning', 5000);
              }
-             
+
              blob = currentBlob;
              mimeType = 'image/jpeg';
         }
@@ -405,11 +420,15 @@ async function runTool(toolType, options = {}) {
 
             let newExt = 'jpg';
             if (toolType === 'convert') {
+                // Get extension from mime type (image/jpeg -> jpeg)
                 newExt = options.format.split('/')[1];
             } else if (blob.type === 'image/png') {
                  newExt = 'png';
             } else if (blob.type === 'image/webp') {
                  newExt = 'webp';
+            } else if (toolType === 'passport') {
+                 // Passport photos are best saved as JPG
+                 newExt = 'jpg';
             }
 
             const originalNameWithoutExt = fileEntry.filename.split('.').slice(0, -1).join('.');
@@ -465,10 +484,12 @@ runConvertBtn.addEventListener('click', () => {
     runTool('convert', { format });
 });
 
-// --- Passport Handler ---
-runPassportBtn.addEventListener('click', () => {
-    runTool('passport');
-});
+// --- Passport Handler (FIXED: Event Listener Added) ---
+if (runPassportBtn) {
+    runPassportBtn.addEventListener('click', () => {
+        runTool('passport');
+    });
+}
 
 
 // --- PDF Handlers ---
@@ -493,10 +514,16 @@ async function runPDF(merge) {
                 updateThumbnailStatus(fileEntry.filename, 'Adding to PDF...');
 
                 const { img, canvas } = await loadImage(fileEntry.originalFile);
+                // Draw image on canvas without scaling/resizing just for DataURL capture
+                canvas.width = img.width;
+                canvas.height = img.height;
+                canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
+                
                 const imgData = canvas.toDataURL('image/jpeg', 0.9);
-                
+
                 if (i > 0) pdf.addPage();
-                
+
+                // Calculate image dimensions to fit page with padding
                 const pageWidth = pdf.internal.pageSize.getWidth();
                 const pageHeight = pdf.internal.pageSize.getHeight();
                 const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
@@ -504,7 +531,7 @@ async function runPDF(merge) {
                 const h = img.height * ratio;
                 const x = (pageWidth - w) / 2;
                 const y = (pageHeight - h) / 2;
-                
+
                 pdf.addImage(imgData, 'JPEG', x, y, w, h);
                 fileEntry.status = `Added to PDF`;
                 updateThumbnailStatus(fileEntry.filename, fileEntry.status);
@@ -524,12 +551,18 @@ async function runPDF(merge) {
         try {
              for (const fileEntry of state.files) {
                 updateThumbnailStatus(fileEntry.filename, 'Creating PDF...');
-                
+
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF();
                 const { img, canvas } = await loadImage(fileEntry.originalFile);
-                const imgData = canvas.toDataURL('image/jpeg', 0.9);
                 
+                // Draw image on canvas without scaling/resizing just for DataURL capture
+                canvas.width = img.width;
+                canvas.height = img.height;
+                canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.9);
+
                 const pageWidth = pdf.internal.pageSize.getWidth();
                 const pageHeight = pdf.internal.pageSize.getHeight();
                 const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
@@ -537,14 +570,14 @@ async function runPDF(merge) {
                 const h = img.height * ratio;
                 const x = (pageWidth - w) / 2;
                 const y = (pageHeight - h) / 2;
-                
+
                 pdf.addImage(imgData, 'JPEG', x, y, w, h);
-                
+
                 const pdfBlob = pdf.output('blob');
-                
+
                 fileEntry.status = `PDF Ready`;
                 updateThumbnailStatus(fileEntry.filename, fileEntry.status);
-                
+
                 const originalNameWithoutExt = fileEntry.filename.split('.').slice(0, -1).join('.');
                 downloadBlob(pdfBlob, `${originalNameWithoutExt}-quickpic.pdf`);
             }

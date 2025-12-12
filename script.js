@@ -93,19 +93,18 @@ document.querySelectorAll('[data-tool-link]').forEach(link => {
 });
 
 
-// Checks URL Hash on Load (Deep Linking Fix)
+// Checks URL Hash on Load (Deep Linking Fix) - SCROLLING REMOVED
 function checkURLHash() {
     const hash = window.location.hash;
     if (hash) {
         const toolId = hash.substring(1); 
-        const targetButton = document.querySelector(`[data-tool="${toolId}"]`);
-
-        if (targetButton) {
-            targetButton.click();
-            document.getElementById('select-area').scrollIntoView({ behavior: 'smooth' }); // <-- यह लाइन हटानी है!
-        }
+        
+        // सीधे switchTool कॉल करें, ताकि कोई क्लिक इवेंट स्क्रॉलिंग न करे
+        switchTool(toolId); 
     }
+    // अगर hash नहीं है, तो डिफ़ॉल्ट टूल 'tool-kb' पहले ही लोड हो जाएगा।
 }
+
 
 
 // =========================================================

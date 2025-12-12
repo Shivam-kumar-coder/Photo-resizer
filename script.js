@@ -71,16 +71,22 @@ function switchTool(toolId) {
     });
 }
 
-// Event listeners for navigation buttons (FIXED: Added Hash Update)
+// Event listeners for navigation buttons (FINAL FIX: NO SCROLLING)
 navButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => { // (e) इवेंट ऑब्जेक्ट डालें
+        e.preventDefault(); // सुनिश्चित करें कि कोई डिफ़ॉल्ट HTML व्यवहार (जैसे स्क्रॉलिंग) न हो
         const toolId = btn.getAttribute('data-tool');
-        switchTool(toolId);
-        // --- FIX: Add hash update for main navigation buttons ---
+        
+        // 1. केवल टूल को स्विच करें
+        switchTool(toolId); 
+        
+        // 2. URL में हैश अपडेट करें (SEO के लिए ज़रूरी)
         window.location.hash = toolId; 
-        // -------------------------------------------------------
+        
+        // 3. कोई स्क्रॉल कमांड नहीं!
     });
 });
+
 
 // Functionality to switch tools based on content links
 document.querySelectorAll('[data-tool-link]').forEach(link => {

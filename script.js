@@ -102,7 +102,7 @@ function checkURLHash() {
 
         if (targetButton) {
             targetButton.click();
-            document.getElementById('select-area').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('select-area').scrollIntoView({ behavior: 'smooth' }); // <-- यह लाइन हटानी है!
         }
     }
 }

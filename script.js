@@ -511,13 +511,18 @@ async function runPDF(merge) {
                 const fileEntry = state.files[i];
                 updateThumbnailStatus(fileEntry.filename, 'Adding to PDF...');
 
-                const { img, canvas } = await loadImage(fileEntry.originalFile);
-                // Draw image on canvas without scaling/resizing just for DataURL capture
-                canvas.width = img.width;
-                canvas.height = img.height;
-                canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
+                const { img, canvas, ctx } = await loadImage(fileEntry.originalFile);
 
-                const imgData = canvas.toDataURL('image/jpeg', 0.9);
+// 🔥 FIX: White background (PNG / WebP transparency issue fix)
+canvas.width = img.width;
+canvas.height = img.height;
+
+ctx.fillStyle = "#FFFFFF";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.drawImage(img, 0, 0);
+
+// ✅ Always convert image to JPEG before PDF
+const imgData = canvas.toDataURL('image/jpeg', 0.9);
 
                 if (i > 0) pdf.addPage();
 

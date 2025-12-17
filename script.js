@@ -1,301 +1,611 @@
-/**
- * QuickPic - Professional Client-Side Image Suite
- * Developed by SKS Technologies
- * Full Feature: KB Reducer, Pixel Resizer, Quality Compressor, Format Converter, 
- * Passport Maker (35x45mm), and Robust PDF Merger.
- */
+// Ensure jspdf is loaded globally from index.html
 
 const state = {
-    files: [],
+    files: [], // Array to hold File objects and their processed data
     activeTool: 'tool-kb',
     isProcessing: false,
-    quality: 70
 };
 
-// --- DOM ELEMENTS ---
+// DOM Elements
+const dropArea = document.getElementById('dropbox');
 const fileInput = document.getElementById('fileInput');
 const selectBtn = document.getElementById('selectBtn');
-const thumbGrid = document.getElementById('thumb-grid');
 const thumbsArea = document.getElementById('thumbs-area');
+const thumbGrid = document.getElementById('thumb-grid');
 const resetBtn = document.getElementById('resetBtn');
+
+// Tool Buttons and Panels
+const navButtons = document.querySelectorAll('.nav-btn');
+const toolPanels = document.querySelectorAll('.tool-panel');
+
+// KB Reducer Elements
+const targetSizeInput = document.getElementById('targetSize');
+const runKbBtn = document.getElementById('runKb');
+
+// Pixel Resize Elements
+const widthPxInput = document.getElementById('widthPx');
+const heightPxInput = document.getElementById('heightPx');
+const keepAspectCheckbox = document.getElementById('keepAspect');
+const runPxBtn = document.getElementById('runPx');
+
+// Compress Elements
 const qualitySlider = document.getElementById('qualitySlider');
-const qualityVal = document.getElementById('qualityVal');
+const qualityValSpan = document.getElementById('qualityVal');
+const runCompressBtn = document.getElementById('runCompress');
+
+// Convert Elements
+const convertFormatSelect = document.getElementById('convertFormat');
+const runConvertBtn = document.getElementById('runConvert');
+
+// PDF Elements
+const runPdfMergeBtn = document.getElementById('runPdfMerge');
+const runPdfSeparateBtn = document.getElementById('runPdfSeparate');
+
+// Passport Element 
+const runPassportBtn = document.getElementById('runPassport'); 
+
+// NEW: Notification Container
 const notificationContainer = document.getElementById('notification-container');
 
-// --- INITIALIZATION & NAVIGATION ---
-document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+
+// =========================================================
+// UI SWITCHING & DEEP LINKING LOGIC (FINAL, SCROLLING REMOVED)
+// =========================================================
+
+// Function to switch tool panels and update navigation
+function switchTool(toolId) {
+    state.activeTool = toolId;
+    navButtons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-tool') === toolId) {
+            btn.classList.add('active');
+        }
+    });
+
+    toolPanels.forEach(panel => {
+        if (panel.id === toolId) {
+            panel.classList.add('visible');
+        } else {
+            panel.classList.remove('visible');
+        }
+    });
+}
+
+// 🚀 Navigation Buttons Listener: Updates Hash without scrolling
+navButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => { 
+        e.preventDefault(); 
         const toolId = btn.getAttribute('data-tool');
-        setActiveTool(toolId);
+
+        switchTool(toolId); 
+        
+        // 🚨 FINAL FIX: Hash update for SEO, but using pushState to prevent scroll
+        history.pushState(null, null, '#' + toolId);
     });
 });
 
-function setActiveTool(toolId) {
-    state.activeTool = toolId;
-    document.querySelectorAll('.nav-btn').forEach(b => {
-        b.classList.toggle('active', b.getAttribute('data-tool') === toolId);
+
+// 🔗 Content Links Listener: Updates Hash without scrolling
+document.querySelectorAll('[data-tool-link]').forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const toolId = link.getAttribute('data-tool-link');
+        
+        switchTool(toolId);
+        
+        // 🚨 FINAL FIX: Hash update for SEO, but using pushState to prevent scroll
+        history.pushState(null, null, '#' + toolId);
     });
-    document.querySelectorAll('.tool-panel').forEach(p => {
-        p.classList.toggle('visible', p.id === toolId);
-    });
-    window.location.hash = toolId;
+});
+
+
+// 🌐 Initialization: Checks URL Hash on Load (Deep Linking Fix)
+function checkURLHash() {
+    const hash = window.location.hash;
+    if (hash) {
+        const toolId = hash.substring(1); 
+        switchTool(toolId); 
+    }
+    // No scroll command needed here.
 }
 
-// --- NOTIFICATION SYSTEM ---
-function showNotify(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-        padding: 12px 20px;
-        margin-bottom: 10px;
-        border-radius: 8px;
-        color: white;
-        font-weight: 500;
-        background: ${type === 'success' ? '#10b981' : '#ef4444'};
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        animation: slideIn 0.3s ease-out;
-    `;
-    toast.innerText = message;
-    notificationContainer.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 500);
-    }, 3000);
+
+// =========================================================
+// FILE UPLOAD AND THUMBNAIL LOGIC
+// =========================================================
+
+function handleFileSelect(event) {
+    const files = Array.from(event.target.files);
+    addFilesToState(files);
 }
 
-// --- FILE HANDLING LOGIC ---
-selectBtn.addEventListener('click', () => fileInput.click());
+function handleDrop(event) {
+    event.preventDefault();
+    dropArea.classList.remove('dragover');
+    const files = Array.from(event.dataTransfer.files);
+    addFilesToState(files);
+}
 
-fileInput.addEventListener('change', handleFiles);
+function addFilesToState(files) {
+    if (state.isProcessing) return;
 
-function handleFiles(e) {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
 
-    files.forEach(file => {
-        if (!file.type.startsWith('image/')) {
-            showNotify(`File ${file.name} is not an image`, 'error');
-            return;
-        }
+    if (imageFiles.length === 0) {
+        showNotification("Please select image files (JPG, PNG, WebP).", 'error', 4000);
+        return;
+    }
 
-        const fileId = Math.random().toString(36).substr(2, 9);
+    if (state.files.length === 0) {
+        state.files = [];
+        thumbGrid.innerHTML = '';
+        thumbsArea.classList.remove('hidden');
+    }
+
+    imageFiles.forEach(file => {
         state.files.push({
-            id: fileId,
             originalFile: file,
             filename: file.name,
-            size: (file.size / 1024).toFixed(2)
+            originalSize: file.size,
+            processedBlob: null,
+            processedSize: 0,
+            status: 'Ready',
         });
 
         const reader = new FileReader();
-        reader.onload = (event) => {
-            const thumb = document.createElement('div');
-            thumb.className = 'thumb-item';
-            thumb.id = `thumb-${fileId}`;
-            thumb.innerHTML = `
-                <div class="thumb-img-container">
-                    <img src="${event.target.result}" alt="preview">
-                </div>
-                <div class="thumb-info">
-                    <p class="name">${file.name}</p>
-                    <p class="size">${(file.size / 1024).toFixed(1)} KB</p>
-                    <span class="status" id="status-${fileId}">Ready</span>
-                </div>
-            `;
-            thumbGrid.appendChild(thumb);
+        reader.onload = (e) => {
+            displayThumbnail(file.name, e.target.result, file.size);
         };
         reader.readAsDataURL(file);
     });
-
-    thumbsArea.classList.remove('hidden');
-    showNotify(`${files.length} images added`);
 }
 
+function displayThumbnail(filename, dataURL, size) {
+    const item = document.createElement('div');
+    item.className = 'thumb-item';
+    item.dataset.filename = filename;
+
+    const img = document.createElement('img');
+    img.className = 'thumb-img';
+    img.src = dataURL;
+
+    const name = document.createElement('span');
+    name.className = 'thumb-filename';
+    name.textContent = filename;
+
+    const status = document.createElement('span');
+    status.className = 'thumb-status';
+    status.textContent = `Size: ${(size / 1024).toFixed(1)} KB`;
+
+    item.appendChild(img);
+    item.appendChild(name);
+    item.appendChild(status);
+    thumbGrid.appendChild(item);
+}
+
+
+// Reset Button Functionality
 resetBtn.addEventListener('click', () => {
     state.files = [];
     thumbGrid.innerHTML = '';
     thumbsArea.classList.add('hidden');
     fileInput.value = '';
-    showNotify("All files cleared", "error");
+    showNotification("Image selection cleared. Ready for new upload.", 'success');
 });
 
-// --- CORE IMAGE PROCESSING ENGINE ---
-async function processImage(fileObj, options = {}) {
+
+// Drag/Drop Event Listeners
+dropArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropArea.classList.add('dragover');
+});
+
+dropArea.addEventListener('dragleave', () => {
+    dropArea.classList.remove('dragover');
+});
+
+dropArea.addEventListener('drop', handleDrop);
+selectBtn.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', handleFileSelect);
+
+
+// =========================================================
+// CORE IMAGE PROCESSING & UTILITIES
+// =========================================================
+
+function loadImage(file) {
     return new Promise((resolve, reject) => {
+        const img = new Image();
         const reader = new FileReader();
+
         reader.onload = (e) => {
-            const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                let ctx = canvas.getContext('2d');
-
-                let targetWidth = img.width;
-                let targetHeight = img.height;
-
-                // Handle Passport Specific (Center Crop 35x45mm)
-                if (options.isPassport) {
-                    canvas.width = 413; // ~35mm at 300 DPI
-                    canvas.height = 531; // ~45mm at 300 DPI
-                    const imgRatio = img.width / img.height;
-                    const targetRatio = canvas.width / canvas.height;
-                    
-                    let drawWidth, drawHeight, offsetX, offsetY;
-                    if (imgRatio > targetRatio) {
-                        drawHeight = img.height;
-                        drawWidth = img.height * targetRatio;
-                        offsetX = (img.width - drawWidth) / 2;
-                        offsetY = 0;
-                    } else {
-                        drawWidth = img.width;
-                        drawHeight = img.width / targetRatio;
-                        offsetX = 0;
-                        offsetY = (img.height - drawHeight) / 2;
-                    }
-                    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight, 0, 0, canvas.width, canvas.height);
-                } 
-                // Handle Pixel Resize
-                else if (options.width && options.height) {
-                    canvas.width = options.width;
-                    canvas.height = options.height;
-                    ctx.drawImage(img, 0, 0, options.width, options.height);
-                } 
-                // Default
-                else {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-                }
-
-                resolve({ canvas, filename: fileObj.filename, originalType: fileObj.originalFile.type });
+                const ctx = canvas.getContext('2d');
+                resolve({ img, canvas, ctx });
             };
+            img.onerror = reject;
             img.src = e.target.result;
         };
         reader.onerror = reject;
-        reader.readAsDataURL(fileObj.originalFile);
+        reader.readAsDataURL(file);
     });
 }
 
-// --- TOOL: KB REDUCER (ITERATIVE ALGORITHM) ---
-document.getElementById('runKb').addEventListener('click', async () => {
-    const targetKB = parseInt(document.getElementById('targetSize').value);
-    if (!targetKB) return showNotify("Please enter target KB", "error");
-
-    state.isProcessing = true;
-    for (const file of state.files) {
-        document.getElementById(`status-${file.id}`).innerText = "Reducing...";
-        const { canvas, filename } = await processImage(file);
-        
-        let quality = 0.95;
-        let blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
-        
-        // Smart Iteration to hit target
-        while (blob.size > targetKB * 1024 && quality > 0.05) {
-            quality -= (blob.size > targetKB * 2048) ? 0.15 : 0.05;
-            blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
-        }
-
-        downloadBlob(blob, `QuickPic_${targetKB}kb_${filename.split('.')[0]}.jpg`);
-        document.getElementById(`status-${file.id}`).innerText = "Done";
-    }
-    state.isProcessing = false;
-    showNotify("Bulk KB Reduction Finished");
-});
-
-// --- TOOL: PDF MERGER (THE BIG ONE) ---
-async function runPDF(isMerge) {
-    if (state.files.length === 0) return showNotify("No images selected", "error");
-    if (typeof jspdf === 'undefined') return showNotify("PDF Library Error", "error");
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    showNotify(isMerge ? "Merging PDF..." : "Exporting PDFs...");
-
-    for (let i = 0; i < state.files.length; i++) {
-        const file = state.files[i];
-        const { canvas } = await processImage(file);
-        const imgData = canvas.toDataURL('image/jpeg', 0.85);
-
-        const pw = doc.internal.pageSize.getWidth();
-        const ph = doc.internal.pageSize.getHeight();
-        const ratio = Math.min(pw / canvas.width, ph / canvas.height);
-        const w = canvas.width * ratio;
-        const h = canvas.height * ratio;
-        const x = (pw - w) / 2;
-        const y = (ph - h) / 2;
-
-        if (isMerge) {
-            if (i > 0) doc.addPage();
-            doc.addImage(imgData, 'JPEG', x, y, w, h);
-        } else {
-            const singleDoc = new jsPDF();
-            singleDoc.addImage(imgData, 'JPEG', x, y, w, h);
-            singleDoc.save(`QuickPic_${file.filename.split('.')[0]}.pdf`);
-        }
-    }
-
-    if (isMerge) doc.save('QuickPic_Merged_Documents.pdf');
-    showNotify("PDF Export Complete");
+function canvasToBlob(canvas, mimeType, quality) {
+    return new Promise(resolve => {
+        canvas.toBlob(resolve, mimeType, quality); 
+    });
 }
 
-document.getElementById('runPdfMerge').addEventListener('click', () => runPDF(true));
-document.getElementById('runPdfSeparate').addEventListener('click', () => runPDF(false));
-
-// --- TOOL: PASSPORT MAKER ---
-document.getElementById('runPassport').addEventListener('click', async () => {
-    for (const file of state.files) {
-        const { canvas, filename } = await processImage(file, { isPassport: true });
-        canvas.toBlob((blob) => {
-            downloadBlob(blob, `Passport_35x45_${filename}`);
-        }, 'image/jpeg', 0.95);
+function updateThumbnailStatus(filename, statusText) {
+    const thumbItem = document.querySelector(`.thumb-item[data-filename="${filename}"]`);
+    if (thumbItem) {
+        const statusSpan = thumbItem.querySelector('.thumb-status');
+        statusSpan.textContent = statusText;
+        if (statusText.includes('DONE')) {
+             statusSpan.style.color = 'green';
+        } else if (statusText === 'ERROR') {
+             statusSpan.style.color = 'red';
+        } else {
+             statusSpan.style.color = 'var(--accent)';
+        }
     }
-    showNotify("Passport Photos Generated");
-});
+}
 
-// --- OTHER TOOLS (PIXEL, COMPRESS, CONVERT) ---
-document.getElementById('runPx').addEventListener('click', async () => {
-    const w = parseInt(document.getElementById('widthPx').value);
-    const h = parseInt(document.getElementById('heightPx').value);
-    if (!w || !h) return showNotify("Enter W x H", "error");
-
-    for (const file of state.files) {
-        const { canvas, filename } = await processImage(file, { width: w, height: h });
-        canvas.toBlob(b => downloadBlob(b, `Resized_${filename}`), 'image/jpeg', 0.9);
-    }
-});
-
-document.getElementById('runConvert').addEventListener('click', async () => {
-    const format = document.getElementById('convertFormat').value;
-    for (const file of state.files) {
-        const { canvas, filename } = await processImage(file);
-        const ext = format.split('/')[1];
-        canvas.toBlob(b => downloadBlob(b, `Converted_${filename.split('.')[0]}.${ext}`), format);
-    }
-});
-
-document.getElementById('runCompress').addEventListener('click', async () => {
-    const q = qualitySlider.value / 100;
-    for (const file of state.files) {
-        const { canvas, filename } = await processImage(file);
-        canvas.toBlob(b => downloadBlob(b, `Compressed_${filename}`), 'image/jpeg', q);
-    }
-});
-
-// --- HELPER: DOWNLOAD ---
 function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
 }
 
-// Update Quality Slider Label
-qualitySlider.addEventListener('input', (e) => {
-    qualityVal.innerText = e.target.value;
+// NEW: Toast Notification Handler
+function showNotification(message, type = 'success', duration = 3000) {
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${type}`;
+    toast.textContent = message;
+
+    notificationContainer.appendChild(toast);
+    void toast.offsetWidth; 
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.parentElement.removeChild(toast);
+            }
+        }, 300);
+    }, duration);
+}
+
+// NEW: Updated Download Batch
+function downloadBatch(blobs, filenames) {
+    showNotification(`${blobs.length} image(s) downloaded successfully!`, 'success');
+
+    // In a real app, you would use a library like JSZip here.
+    blobs.forEach((blob, index) => {
+        downloadBlob(blob, filenames[index]);
+    });
+}
+
+
+// =========================================================
+// MAIN PROCESSING FUNCTION (CLEANED)
+// =========================================================
+async function processFile(fileEntry, toolType, options = {}) {
+    try {
+        const { img, canvas, ctx } = await loadImage(fileEntry.originalFile);
+
+        let targetWidth = img.width;
+        let targetHeight = img.height;
+        let mimeType = fileEntry.originalFile.type;
+        let quality = 0.9; 
+
+        // Apply tool-specific transformations
+        if (toolType === 'compress') {
+            quality = options.quality / 100;
+            mimeType = 'image/jpeg';
+        } else if (toolType === 'px') {
+            targetWidth = options.width;
+            targetHeight = options.height;
+            if (options.keepAspect) {
+                const ratio = Math.min(options.width / img.width, options.height / img.height);
+                targetWidth = img.width * ratio;
+                targetHeight = img.height * ratio;
+            }
+        } else if (toolType === 'convert') {
+            mimeType = options.format;
+            if (mimeType === 'image/jpeg' || mimeType === 'image/webp') {
+                quality = 0.9;
+            }
+        } else if (toolType === 'passport') {
+             // Passport size 413x531 pixels (standard Indian 3.5x4.5 cm at 300 DPI)
+             targetWidth = 413;
+             targetHeight = 531;
+
+             const scale = Math.max(targetWidth / img.width, targetHeight / img.height);
+             const x = (targetWidth / 2) - (img.width / 2) * scale;
+             const y = (targetHeight / 2) - (img.height / 2) * scale;
+
+             canvas.width = targetWidth;
+             canvas.height = targetHeight;
+             ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+        }
+
+        if (toolType !== 'passport') {
+             canvas.width = targetWidth;
+             canvas.height = targetHeight;
+             ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+        }
+
+
+        let blob = await canvasToBlob(canvas, mimeType, quality);
+
+        // --- KB REDUCER: Iterative Logic ---
+        if (toolType === 'kb' && options.targetSizeKB > 0) {
+             const targetBytes = options.targetSizeKB * 1024;
+             let currentQuality = 90; 
+             let currentBlob = blob;
+             let iterationCount = 0; // Prevent infinite loop
+
+             // Step 1: Reduce quality
+             while (currentBlob.size > targetBytes && currentQuality > 10 && iterationCount < 20) {
+                 currentQuality -= 5;
+                 // Note: We use the original canvas from loadImage
+                 currentBlob = await canvasToBlob(canvas, 'image/jpeg', currentQuality / 100); 
+                 iterationCount++;
+             }
+
+             // Step 2: Reduce dimensions if quality reduction failed to reach target
+             if (currentBlob.size > targetBytes) {
+                 // Reset canvas/context using original image for clean scaling
+                 canvas.width = img.width * 0.8;
+                 canvas.height = img.height * 0.8;
+                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                 // Try one more time with lower dimension and fixed quality (e.g., 80)
+                 currentBlob = await canvasToBlob(canvas, 'image/jpeg', 0.8);
+                 showNotification("KB target difficult to reach, reducing image dimensions by 20%.", 'warning', 5000);
+             }
+
+             blob = currentBlob;
+             mimeType = 'image/jpeg';
+        }
+        // --- End KB Reducer Logic ---
+
+        fileEntry.processedBlob = blob;
+        fileEntry.processedSize = blob.size;
+        fileEntry.status = `DONE: ${(blob.size / 1024).toFixed(1)} KB`;
+        updateThumbnailStatus(fileEntry.filename, fileEntry.status);
+        return blob;
+
+    } catch (error) {
+        // NEW: Error handling with Toast Notification
+        console.error("Error processing file:", error);
+        fileEntry.status = 'ERROR';
+        updateThumbnailStatus(fileEntry.filename, 'ERROR');
+        showNotification(`Error: Could not process ${fileEntry.filename}.`, 'error', 5000);
+        return null;
+    }
+}
+
+
+// =========================================================
+// TOOL ACTION HANDLERS
+// =========================================================
+async function runTool(toolType, options = {}) {
+    if (state.files.length === 0 || state.isProcessing) {
+        showNotification("Please select images first to run the tool.", 'error', 4000);
+        return;
+    }
+
+    state.isProcessing = true;
+
+    const processedBlobs = [];
+    const processedFilenames = [];
+
+    for (const fileEntry of state.files) {
+        updateThumbnailStatus(fileEntry.filename, 'Processing...');
+
+        const blob = await processFile(fileEntry, toolType, options);
+
+        if (blob) {
+            processedBlobs.push(blob);
+
+            let newExt = 'jpg';
+            if (toolType === 'convert') {
+                // Get extension from mime type (image/jpeg -> jpg)
+                newExt = options.format.split('/')[1].replace('jpeg', 'jpg'); 
+            } else if (blob.type === 'image/png') {
+                 newExt = 'png';
+            } else if (blob.type === 'image/webp') {
+                 newExt = 'webp';
+            } else if (toolType === 'passport') {
+                 // Passport photos are best saved as JPG
+                 newExt = 'jpg';
+            }
+
+            const originalNameWithoutExt = fileEntry.filename.split('.').slice(0, -1).join('.');
+            processedFilenames.push(`${originalNameWithoutExt}-quickpic.${newExt}`);
+        }
+    }
+
+    state.isProcessing = false;
+
+    if (processedBlobs.length > 0 && toolType !== 'pdf') {
+        downloadBatch(processedBlobs, processedFilenames);
+    }
+}
+
+// --- KB Reducer Handler ---
+runKbBtn.addEventListener('click', () => {
+    const targetSizeKB = parseInt(targetSizeInput.value);
+    if (isNaN(targetSizeKB) || targetSizeKB <= 0) {
+        showNotification("Please enter a valid target size in KB.", 'error', 4000);
+        return;
+    }
+    runTool('kb', { targetSizeKB });
 });
 
-// Auto-switch tool on hash change
-window.addEventListener('hashchange', () => {
-    const hash = window.location.hash.substring(1);
-    if (hash) setActiveTool(hash);
+
+// --- Pixel Resize Handler ---
+runPxBtn.addEventListener('click', () => {
+    const width = parseInt(widthPxInput.value);
+    const height = parseInt(heightPxInput.value);
+    if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+        showNotification("Please enter valid width and height in pixels.", 'error', 4000);
+        return;
+    }
+    const keepAspect = keepAspectCheckbox.checked;
+    runTool('px', { width, height, keepAspect });
 });
+
+
+// --- Compress Handler ---
+qualitySlider.addEventListener('input', () => {
+    qualityValSpan.textContent = qualitySlider.value;
+});
+
+runCompressBtn.addEventListener('click', () => {
+    const quality = parseInt(qualitySlider.value);
+    runTool('compress', { quality });
+});
+
+
+// --- Convert Handler ---
+runConvertBtn.addEventListener('click', () => {
+    const format = convertFormatSelect.value;
+    runTool('convert', { format });
+});
+
+// --- Passport Handler ---
+if (runPassportBtn) {
+    runPassportBtn.addEventListener('click', () => {
+        runTool('passport');
+    });
+}
+
+
+// --- PDF Handlers ---
+async function runPDF(merge) {
+    if (state.files.length === 0 || state.isProcessing) {
+        showNotification("Please select images first to create PDF.", 'error', 4000);
+        return;
+    }
+    state.isProcessing = true;
+
+    if (merge) {
+        // MERGE: Create a single PDF with all images
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+
+        try {
+             for (let i = 0; i < state.files.length; i++) {
+                const fileEntry = state.files[i];
+                updateThumbnailStatus(fileEntry.filename, 'Adding to PDF...');
+
+                const { img, canvas } = await loadImage(fileEntry.originalFile);
+                // Draw image on canvas without scaling/resizing just for DataURL capture
+                canvas.width = img.width;
+                canvas.height = img.height;
+                canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.9);
+
+                if (i > 0) pdf.addPage();
+
+                // Calculate image dimensions to fit page with padding
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
+                const w = img.width * ratio;
+                const h = img.height * ratio;
+                const x = (pageWidth - w) / 2;
+                const y = (pageHeight - h) / 2;
+
+                pdf.addImage(imgData, 'JPEG', x, y, w, h);
+                fileEntry.status = `Added to PDF`;
+                updateThumbnailStatus(fileEntry.filename, fileEntry.status);
+            }
+
+            const pdfBlob = pdf.output('blob');
+            downloadBlob(pdfBlob, 'QuickPic-Merged.pdf');
+            showNotification("Successfully merged images into a single PDF!", 'success');
+
+        } catch (error) {
+             console.error("PDF Merge Error:", error);
+             showNotification("Error during PDF merging.", 'error', 5000);
+        }
+
+    } else {
+        // SEPARATE: Create one PDF per image
+        try {
+             for (const fileEntry of state.files) {
+                updateThumbnailStatus(fileEntry.filename, 'Creating PDF...');
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+                const { img, canvas } = await loadImage(fileEntry.originalFile);
+
+                // Draw image on canvas without scaling/resizing just for DataURL capture
+                canvas.width = img.width;
+                canvas.height = img.height;
+                canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.9);
+
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
+                const w = img.width * ratio;
+                const h = img.height * ratio;
+                const x = (pageWidth - w) / 2;
+                const y = (pageHeight - h) / 2;
+
+                pdf.addImage(imgData, 'JPEG', x, y, w, h);
+
+                const pdfBlob = pdf.output('blob');
+
+                fileEntry.status = `PDF Ready`;
+                updateThumbnailStatus(fileEntry.filename, fileEntry.status);
+
+                const originalNameWithoutExt = fileEntry.filename.split('.').slice(0, -1).join('.');
+                downloadBlob(pdfBlob, `${originalNameWithoutExt}-quickpic.pdf`);
+            }
+            showNotification("Successfully exported all images as separate PDFs!", 'success');
+        } catch (error) {
+             console.error("PDF Separate Error:", error);
+             showNotification("Error during PDF export.", 'error', 5000);
+        }
+    }
+
+    // Reset status of all files that were not updated to DONE/ERROR/PDF Ready
+    state.files.forEach(fileEntry => {
+        if (fileEntry.status.includes('Adding to PDF') || fileEntry.status === 'Creating PDF...') {
+            fileEntry.status = 'Ready';
+            updateThumbnailStatus(fileEntry.filename, 'Ready');
+        }
+    });
+
+    state.isProcessing = false;
+}
+
+runPdfMergeBtn.addEventListener('click', () => runPDF(true));
+runPdfSeparateBtn.addEventListener('click', () => runPDF(false));
+
+
+// =========================================================
+// INITIALIZATION
+// =========================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    checkURLHash();
+});
+// window.addEventListener('load', checkURLHash); - DOMContentLoaded is sufficient 

@@ -492,16 +492,26 @@ if (runPassportBtn) {
     });
 }
 
-
 // --- PDF Handlers ---
 async function runPDF(merge) {
     if (state.files.length === 0 || state.isProcessing) {
         showNotification("Please select images first to create PDF.", 'error', 4000);
         return;
     }
-    state.isProcessing = true;
+    
+    // 🚨 यहाँ चेक करें कि लाइब्रेरी लोड हुई है या नहीं
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        showNotification("PDF Library not loaded. Please refresh or check connection.", 'error', 5000);
+        return;
+    }
 
-    if (merge) {
+    state.isProcessing = true;
+    const { jsPDF } = window.jspdf; // सही तरीका
+    const pdf = new jsPDF();
+    
+    // ... बाकी कोड वही रहेगा
+
+
         // MERGE: Create a single PDF with all images
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF();
